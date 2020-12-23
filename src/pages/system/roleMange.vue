@@ -17,10 +17,10 @@
         <Button type="primary" @click="reset">重&nbsp;&nbsp;&nbsp;置</Button>
       </Col>-->
       <Col span="2" offset="17">
-        <Button type="primary">查&nbsp;&nbsp;&nbsp;询</Button>
+        <Button type="primary" @click="searchRole">查&nbsp;&nbsp;&nbsp;询</Button>
       </Col>
     </Row>
-    <Table :context="self" :data="tableData" :columns="tableColumns" stripe border></Table>
+    <Table :context="self" :data="tableData" :height="400" :columns="tableColumns" stripe border></Table>
     <!-- 新增模态框 -->
     <Modal
       v-model="addRoles"
@@ -70,7 +70,7 @@
       <div slot="footer">
         <Button v-if="title=='编辑角色'" style="margin-right:500px" type="error" @click="delet">删除</Button>
         <Button type="text">取消</Button>
-        <Button type="primary">保存</Button>
+        <Button type="primary" @click="saveRole">保存</Button>
       </div>
     </Modal>
 
@@ -83,26 +83,28 @@
       </div>
     </Modal>
     <div style="margin: 10px;overflow: hidden">
-        <div style="float: right;">
-          <Page
-            :total="total"
-            show-sizer
-            :page-size-opts="[5, 10, 30]"
-            :page-size="pageSize"
-            @on-change="changePage"
-            @on-page-size-change="nowpage"
-          ></Page>
-        </div>
+      <div style="float: right;">
+        <Page
+          :total="total"
+          show-sizer
+          :page-size-opts="[5, 10, 30]"
+          :page-size="pageSize"
+          @on-change="changePage"
+          @on-page-size-change="nowpage"
+        ></Page>
       </div>
+    </div>
   </div>
 </template>
 <script>
 import treeTransfer from 'el-tree-transfer'
 import {
   getRoleListPage,
+  addRole,
   removeUser,
   editUser,
-  addUsers
+  addUsers,
+  editRole
 } from '../../api/api';
 export default {
   data () {
@@ -115,6 +117,7 @@ export default {
       addRoles: false,
       addMaterials: false,
       delModal: false,
+      id: '',
       tableData: [],
       roleInfo: '',
 
@@ -169,7 +172,13 @@ export default {
                 on: {
                   click: () => {
                     this.title = '编辑角色'
+                    this.$refs.role.resetFields();
+                    // console.log(params.row)
+                    this.role.name = params.row.xt_role_name;
+                    this.role.textarea = params.row.xt_role_desc;
+                    this.id = params.row.xt_role_id;
                     this.addRoles = true;
+
 
 
                   }
@@ -248,7 +257,9 @@ export default {
     }
   },
   methods: {
-
+    searchRole () {
+      this.getTableData();
+    },
     delet () {
       this.delModal = true;
     },
@@ -256,13 +267,14 @@ export default {
       return option.toUpperCase().indexOf(value.toUpperCase()) !== -1;
     },
     getTableData () {
-      let searchJson = {
-        xt_role_name: '',
+      let searchJsons = {
+        searchJson: { xt_role_name: this.roleInfo },
+        xt_role_name: this.roleInfo,
         xt_role_isdelete: '',
         start: this.start,
         limit: this.pageSize
       };
-      getRoleListPage(searchJson).then((res) => {
+      getRoleListPage(searchJsons).then((res) => {
 
         console.log(res)
         this.total = res.data.total;
@@ -299,7 +311,7 @@ export default {
     nowpage (index) {
       this.pageSize = index;
       this.page = 1;
-      this.start = (index - 1) * this.pageSize;
+      this.start = (this.page - 1) * this.pageSize;
       this.getTableData();
     },
     addRole () {
@@ -307,6 +319,43 @@ export default {
       this.title = '新建角色'
       this.addRoles = true;
 
+    },
+    saveRole () {
+      let searchJson = {
+        xt_role_desc: this.role.textarea,
+        xt_role_id: this.id,
+        xt_role_name: this.role.name,
+        xt_role_isdelete: 0
+
+      };
+      if (this.title == '新建角色') {
+
+        addRole(searchJson).then((res) => {
+          if (res.data.success) {
+            this.$Message.success('成功')
+            this.addRoles = false;
+            this.getTableData();
+          } else {
+            this.$Message.success('失败')
+          }
+
+
+        });
+      } else {
+        editRole(searchJson).then((res) => {
+          // searchJson.xt_role_id = this.id
+          if (res.data.success) {
+            this.$Message.success('成功')
+            this.addRoles = false;
+            this.getTableData();
+          } else {
+            this.$Message.success('失败')
+          }
+
+
+        });
+
+      }
     },
     // 切换模式 现有树形穿梭框模式transfer 和通讯录模式addressList
 

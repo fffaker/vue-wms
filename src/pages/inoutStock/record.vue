@@ -1,22 +1,66 @@
 <template>
   <div>
-    <Form :label-width="80">
-      <Row>
-        <Col span="8">
-          <FormItem label="仓库信息">
-            <Input v-model="storeInfo" placeholder="搜索仓库名称、备注"></Input>
-          </FormItem>
-        </Col>
-      </Row>
-    </Form>
+    <div>
+      <Tabs :animated="false">
+        <TabPane label="入库记录">
+          <Form :label-width="80">
+            <Row>
+              <Col span="6">
+                <FormItem label="入库信息">
+                  <Input v-model="storeInfo" placeholder="搜索仓库名称、备注"></Input>
+                </FormItem>
+              </Col>
+              <Col span="6">
+                <FormItem label="入库仓库">
+                  <Select>
+                    <Option value="1号仓库">1号仓库</Option>
+                    <Option value="2号仓库">2号仓库</Option>
+                  </Select>
+                </FormItem>
+              </Col>
+              <Col span="8">
+                <FormItem label="入库日期">
+                  <DatePicker type="date" transfer placeholder="Select date" style="width: 200px"></DatePicker>
+                </FormItem>
+              </Col>
+            </Row>
+          </Form>
+        </TabPane>
+        <TabPane label="出库记录">
+          <Form :label-width="80">
+            <Row>
+              <Col span="6">
+                <FormItem label="出库信息">
+                  <Input v-model="storeInfo" placeholder="搜索仓库名称、备注"></Input>
+                </FormItem>
+              </Col>
+              <Col span="6">
+                <FormItem label="出库仓库">
+                  <Select>
+                    <Option value="1号仓库">1号仓库</Option>
+                    <Option value="2号仓库">2号仓库</Option>
+                  </Select>
+                </FormItem>
+              </Col>
+              <Col span="8">
+                <FormItem label="出库日期">
+                  <DatePicker type="date" transfer placeholder="Select date" style="width: 200px"></DatePicker>
+                </FormItem>
+              </Col>
+            </Row>
+          </Form>
+        </TabPane>
+      </Tabs>
+    </div>
+
     <Row style="margin-bottom:20px">
-      <Col span="5">
+      <!-- <Col span="5">
         <Button type="primary" @click="addstore">新建仓库</Button>
-      </Col>
-      <!-- <Col span="2" offset="15">
-        <Button type="primary" @click="reset">重&nbsp;&nbsp;&nbsp;置</Button>
       </Col>-->
-      <Col span="2" offset="17">
+      <Col span="2" offset="18">
+        <Button type="primary" @click="reset">重&nbsp;&nbsp;&nbsp;置</Button>
+      </Col>
+      <Col span="2">
         <Button type="primary">查&nbsp;&nbsp;&nbsp;询</Button>
       </Col>
     </Row>
@@ -407,6 +451,9 @@ export default {
       this.start = (index - 1) * this.pageSize;
       this.getTableData();
     },
+    reset () {
+
+    }
 
   },
 

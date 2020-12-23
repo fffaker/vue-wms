@@ -1,116 +1,240 @@
 <template>
   <div>
-    <Form :label-width="80">
-      <Row>
-        <Col span="8">
-          <FormItem label="仓库信息">
-            <Input v-model="storeInfo" placeholder="搜索仓库名称、备注"></Input>
-          </FormItem>
-        </Col>
-      </Row>
-    </Form>
-    <Row style="margin-bottom:20px">
-      <Col span="5">
-        <Button type="primary" @click="addstore">新建仓库</Button>
-      </Col>
-      <!-- <Col span="2" offset="15">
-        <Button type="primary" @click="reset">重&nbsp;&nbsp;&nbsp;置</Button>
-      </Col>-->
-      <Col span="2" offset="17">
-        <Button type="primary">查&nbsp;&nbsp;&nbsp;询</Button>
-      </Col>
-    </Row>
-    <Table :context="self" :height="400" :data="tableData" :columns="tableColumns" stripe border></Table>
-    <div style="margin: 10px;overflow: hidden">
-      <div style="float: right;">
-        <Page
-          :total="total"
-          show-sizer
-          :page-size-opts="[5, 10, 30]"
-          :page-size="pageSize"
-          @on-change="changePage"
-          @on-page-size-change="nowpage"
-        ></Page>
-      </div>
-    </div>
-    <!-- 新增模态框 -->
-    <Modal
-      v-model="addstores"
-      width="760"
-      :title="title"
-      :mask-closable="false"
-      @on-cancel="addstores=false;"
-    >
-      <Form
-        style="margin-left:100px"
-        ref="store"
-        :model="store"
-        :rules="ruleValidate"
-        :label-width="100"
-      >
-        <p style="margin-left:-100px">基础信息</p>
+    <div class="wareHead">
+      <Form>
         <Row>
-          <Col span="18">
-            <FormItem label="仓库名称：" prop="name">
-              <Input v-model="store.name" placeholder="请输入仓库名称"></Input>
-            </FormItem>
+          <Col span="8" style="line-height: 46px;margin-left: 5px;">
+            <span style="font-weight: 600;color: #333333;margin-right: 6px;">{{ware}}</span>
+            <Dropdown trigger="click" @on-click="changeWare">
+              <a>
+                <span>[切换仓库]</span>
+              </a>
+              <DropdownMenu
+                v-model="ware"
+                slot="list"
+                v-for="(item,index) in this.wares"
+                :key="index"
+              >
+                <DropdownItem :name="item" v-bind:divided="index>0?true:false">{{item}}</DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
           </Col>
-        </Row>
-        <Row>
-          <Col span="18">
-            <FormItem label="仓库类型：" prop="type">
-              <Select v-model="store.type">
-                <Option value="总经理">总经理</Option>
-                <Option value="副总经理">副总经理</Option>
-                <Option value="车间主任">车间主任</Option>
-                <Option value="采购">采购</Option>
-                <Option value="工人">工人</Option>
-                <Option value="财务">财务</Option>
-              </Select>
-            </FormItem>
+          <Col span="2" offset="9" style="line-height: 46px;">
+            <Button type="default" @click="emptyWare">空托盘出库</Button>
           </Col>
-        </Row>
-        <Row>
-          <Col span="18">
-            <FormItem label="仓库管理员：" prop="admin">
-              <Select v-model="store.manger">
-                <Option value="总经理">总经理</Option>
-                <Option value="副总经理">副总经理</Option>
-                <Option value="车间主任">车间主任</Option>
-                <Option value="采购">采购</Option>
-                <Option value="工人">工人</Option>
-                <Option value="财务">财务</Option>
-              </Select>
-            </FormItem>
-          </Col>
-        </Row>
-
-        <Row>
-          <Col span="18">
-            <FormItem label="角色描述：">
-              <Input
-                v-model="store.textarea"
-                type="textarea"
-                :autosize="{minRows: 2,maxRows: 5}"
-                placeholder="请输入角色描述"
-              ></Input>
-            </FormItem>
+          <Col span="3" offset="1" style="line-height: 46px;">
+            <Button type="primary" @click="mentalWare">载物托盘出库</Button>
           </Col>
         </Row>
       </Form>
+    </div>
+    <div class="line">
+      <div class="lines">
+        <div class="lineLeft">
+          <span style="font-weight: 600;">出库暂停</span>
+        </div>
+        <div class="lineRight">
+          <div style="display: inline-block;">
+            <p style="font-weight: 700;font-size: 15px;">TP202012030001(托盘1)</p>
+            <p style="font-size: 15px;color: #7F7F7F;">1号线--1号料架--3行2列</p>
+            <p style="font-size: 15px;color: #A30014;">急停故障(DB99.DBX1500.0)</p>
+          </div>
+
+          <div style="float: right;padding-top: 20px;display: flex;width: 180px;">
+            <span class="delline">删除出库队列</span>
+            <span class="dellines">完成出库</span>
+          </div>
+        </div>
+      </div>
+      <div class="linging">
+        <div class="lineLefts">
+          <span style="font-weight: 600;color: #ffffff;">出库中</span>
+        </div>
+        <div class="lineRight">
+          <p style="font-weight: 700;font-size: 15px;margin-top: 8px;">TP202012030002(托盘2)</p>
+          <p style="font-size: 15px;color: #7F7F7F;">2号线 -- 2号料架 -- 3行2列</p>
+        </div>
+      </div>
+      <div class="linging">
+        <div class="lineLeftss">
+          <span style="font-weight: 600;color: #ffffff;">出库等待</span>
+        </div>
+        <div class="lineRight">
+          <div style="display: inline-block;">
+            <p style="font-weight: 700;font-size: 15px;margin-top: 8px;">TP202012030003(托盘3)</p>
+            <p style="font-size: 15px;color: #7F7F7F;">2号线 -- 2号料架 -- 3行5列</p>
+          </div>
+          <div style="float: right;padding-top: 20px;display: flex;width: 180px;">
+            <span class="dellines" style="margin-left:100px">取消出库</span>
+          </div>
+        </div>
+      </div>
+      <div class="linging">
+        <div class="lineLeftss" style="background-color: rgb(75, 121, 2);">
+          <span style="font-weight: 600;color: #ffffff;">出库完成</span>
+        </div>
+        <div class="lineRight">
+          <div style="display: inline-block;">
+            <p style="font-weight: 700;font-size: 15px;margin-top: 8px;">TP202012030003(托盘3)</p>
+            <p style="font-size: 15px;color: #7F7F7F;">2号线 -- 2号料架 -- 3行5列</p>
+          </div>
+          <div style="float: right;padding-top: 20px;display: flex;width: 180px;">
+            <span class="dellines" style="margin-left:100px">解绑物料</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 空托盘出库框 -->
+    <Modal width="860" height="860" v-model="emptyModal">
+      <p style="text-align:center;margin-top: 18px;font-size: 16px;margin-bottom: 50px;">空托盘出库</p>
+      <Steps :current="current" style="width:400px;margin-left: 217px;">
+        <Step title="扫描托盘"></Step>
+        <Step title="出库"></Step>
+      </Steps>
+      <input
+        class="lg"
+        @keyup.enter="submit"
+        v-show="current==0"
+        style="border-radius: 5px;border: 1px solid #dddee1;height: 90px; width: 390px;margin-left: 220px;margin-top: 70px;font-size: 18px;padding: 6px 7px;"
+        placeholder="请扫描或输入托盘编码"
+      />
+      <div v-show="current==0" style="height:200px"></div>
+      <div v-show="current==1" style="margin-left:120px;margin-top:50px">
+        <Form ref="emptyPalet" :model="emptyPalet" :rules="ruleValidate" :label-width="120">
+          <Row>
+            <Col span="20">
+              <FormItem label="托盘:">
+                <p style="font-weight: 600;">TP20201205002(托盘2)</p>
+              </FormItem>
+            </Col>
+          </Row>
+          <Row>
+            <Col span="20">
+              <FormItem label=" 料架和库位:" prop="stackWare">
+                <a style="font-weight: 600;">请选择料架和库位</a>
+              </FormItem>
+            </Col>
+          </Row>
+          <Row>
+            <Col span="20">
+              <FormItem label="传送线:" prop="transmit">
+                <RadioGroup v-model="border">
+                  <Radio label="1号线" border></Radio>
+                  <Radio label="2号线" border></Radio>
+                  <Radio label="3号线" border></Radio>
+                </RadioGroup>
+              </FormItem>
+            </Col>
+          </Row>
+          <Row>
+            <Col span="20">
+              <FormItem label="托盘状态:">
+                <p style="font-weight: 600;">空盘</p>
+              </FormItem>
+            </Col>
+          </Row>
+        </Form>
+      </div>
       <div slot="footer">
-        <Button v-if="title=='编辑角色'" style="margin-right:500px" type="error" @click="delet">删除</Button>
-        <Button type="text">取消</Button>
-        <Button type="primary">保存</Button>
+        <Button v-show="current==0" type="primary" @click="next">&nbsp;&nbsp;下一步&nbsp;&nbsp;</Button>
+        <Button
+          style="float: left;"
+          v-show="current==1"
+          type="default"
+          @click="back"
+        >&nbsp;&nbsp;上一步&nbsp;&nbsp;</Button>
+        <Button v-show="current==1" type="primary" @click="next1">&nbsp;&nbsp;出库&nbsp;&nbsp;</Button>
       </div>
     </Modal>
-
-    <!-- 删除确认框 -->
-    <Modal v-model="delModal" title="确认删除">
-      <p>确认删除该XXX？</p>
+    <!-- 载物托盘出库框 -->
+    <Modal width="860" height="860" v-model="mentalModal">
+      <p style="text-align:center;margin-top: 18px;font-size: 16px;margin-bottom: 50px;">载物托盘出库</p>
+      <Steps :current="current" style="width:450px;margin-left: 167px;">
+        <Step title="扫描托盘"></Step>
+        <Step title="绑定物料"></Step>
+        <Step title="出库"></Step>
+      </Steps>
+      <Input
+        v-show="current==0"
+        style="height: 100px; width: 390px;margin-left: 220px;margin-top: 70px;"
+        size="large"
+        placeholder="请扫描或输入托盘编码"
+      />
+      <div v-show="current==0" style="height:200px"></div>
+      <div v-show="current==1" style="height:200px;margin-top:50px">
+        <span style="font-size:15px;color:#7F7F7F;margin-left:100px">托盘2</span>
+        <span style="font-weight: 600;font-size:15px;margin-left:2px">21205002</span>
+        <AutoComplete
+          style="display: inline-block;width: 300px;margin-left:100px"
+          v-model="mental"
+          :data="material"
+          :filter-method="filterMethod"
+          placeholder="请扫描或输入物料编码、名称、型号"
+        ></AutoComplete>
+      </div>
+      <div v-show="current==2" style="margin-left:120px;margin-top:50px">
+        <Form ref="warePalet" :model="warePalet" :rules="ruleValidates" :label-width="120">
+          <Row>
+            <Col span="20">
+              <FormItem label="托盘:">
+                <p style="font-weight: 600;">TP20201205002(托盘2)</p>
+              </FormItem>
+            </Col>
+          </Row>
+          <Row>
+            <Col span="20">
+              <FormItem label="物料:">
+                <p style="font-weight: 600;">共2种，合计10件</p>
+              </FormItem>
+            </Col>
+          </Row>
+          <Row>
+            <Col span="20">
+              <FormItem label=" 料架和库位:" prop="stackWare">
+                <a style="font-weight: 600;">请选择料架和库位</a>
+              </FormItem>
+            </Col>
+          </Row>
+          <Row>
+            <Col span="20">
+              <FormItem label="传送线:" prop="transmit">
+                <RadioGroup v-model="border">
+                  <Radio label="1号线" border></Radio>
+                  <Radio label="2号线" border></Radio>
+                  <Radio label="3号线" border></Radio>
+                </RadioGroup>
+              </FormItem>
+            </Col>
+          </Row>
+          <Row>
+            <Col span="20">
+              <FormItem label="托盘状态:" prop="plateState">
+                <RadioGroup v-model="plateState">
+                  <Radio label="满载" border></Radio>
+                  <Radio label="有空余" border></Radio>
+                </RadioGroup>
+              </FormItem>
+            </Col>
+          </Row>
+        </Form>
+      </div>
       <div slot="footer">
-        <Button type="error">确认删除</Button>
-        <Button type="primary">取消</Button>
+        <Button v-show="current==0" type="primary" @click="nexts">&nbsp;&nbsp;下一步&nbsp;&nbsp;</Button>
+        <Button
+          style="float: left;"
+          v-show="current==1"
+          type="default"
+          @click="back"
+        >&nbsp;&nbsp;上一步&nbsp;&nbsp;</Button>
+        <Button v-show="current==1" type="primary" @click="nexts">&nbsp;&nbsp;绑定物料，下一步&nbsp;&nbsp;</Button>
+        <Button
+          style="float: left;"
+          v-show="current==2"
+          type="default"
+          @click="back1"
+        >&nbsp;&nbsp;上一步&nbsp;&nbsp;</Button>
+        <Button v-show="current==2" type="primary" @click="next2">&nbsp;&nbsp;出库&nbsp;&nbsp;</Button>
       </div>
     </Modal>
   </div>
@@ -118,301 +242,191 @@
 <script>
 import treeTransfer from 'el-tree-transfer'
 import {
-  getUserListPage,
-  getMentalListPage,
-  removeUser,
-  editUser,
   addUsers
 } from '../../api/api';
 export default {
   data () {
     return {
-      defaultProps: { label: "name", children: "children" },
-      title: '',
-      titles: ["待选菜单", "已选菜单"],
-      mode: "transfer",
-      self: this,
-      addstores: false,
-      addMaterials: false,
-      delModal: false,
-      tableData: [],
-      storeInfo: '',
-
-      store: {
-        textarea: '',
-        name: '',
-        type: '',
-        admin: '',
-
-
-      },
-
+      ware: '1号仓库',
+      wares: ['1号仓库', '2号仓库'],
+      emptyModal: false,
+      mentalModal: false,
+      current: 0,
+      border: '',
+      material: ['小型断路器', '世达六角旋具套筒'],
+      mental: '',
+      warePalet: {},
+      emptyPalet: {},
       ruleValidate: {
-        name: [
-          { required: true, message: '请输入仓库名称', trigger: 'blur' }
+        stackWare: [
+          { required: true, message: '料架和库位不能为空', trigger: 'blur' }
         ],
-        type: [
-          { required: true, message: '请输入仓库类型', trigger: 'blur' }
+        transmit: [
+          { required: true, message: '传送线不能为空', trigger: 'blur' }
         ],
       },
+      ruleValidates: {
+        stackWare: [
+          { required: true, message: '料架和库位不能为空', trigger: 'blur' }
+        ],
+        plateState: [
+          { required: true, message: '托盘状态不能为空', trigger: 'blur' }
+        ],
+        transmit: [
+          { required: true, message: '传送线不能为空', trigger: 'blur' }
+        ],
+      },
+      plateState: '',
 
-      total: 0,
-      page: 1,
-      tableColumns: [
-        {
-          title: '行号',
-          key: 'matter_extend',
-          align: 'center',
-          sortable: true
-
-        },
-        {
-          title: '名称',
-          key: 'matter_name',
-          align: 'center',
-          sortable: false
-
-        },
-        {
-          title: '编码',
-          align: 'center',
-          key: 'matter_code',
-          width: 100
-        },
-        {
-          title: '型号',
-          align: 'center',
-          key: 'matter_marking'
-        },
-        {
-          title: '类型',
-          align: 'center',
-          key: 'matter_type'
-        },
-        {
-          title: '单位',
-          align: 'center',
-          key: 'matter_unit'
-        },
-        {
-          title: '品牌',
-          align: 'center',
-          key: 'matter_brand'
-        },
-        // {
-        //   title: '性别',
-        //   key: 'sex',
-        //   align: 'center',
-        //   // render: function (row, column, index) {
-        //   //   return row.sex == 0 ? '男' : '女';
-        //   // }
-        // },
-        {
-          title: '操作',
-          key: 'action',
-          fixed: 'right',
-          width: 120,
-          render: (h, params) => {
-            return h('div', [
-              h('Button', {
-                props: {
-                  type: 'primary',
-                  size: 'small'
-                },
-                on: {
-                  click: () => {
-                    this.title = '编辑角色'
-                    this.addstores = true;
-
-                  }
-                }
-              }, '编辑')
-            ]);
-          }
-        }
-      ],
-      pageSize: 10,
-      start: 0,
-
-      fromData: [
-
-        {
-          id: 1,
-          pid: 0,
-          name: "系统管理",
-          children: [
-            {
-              id: 1.1,
-              pid: 1,
-              name: "组织人员",
-              children: [],
-            },
-            {
-              id: 1.2,
-              pid: 1,
-              name: "角色管理",
-              children: [],
-            },
-
-          ],
-        },
-        {
-          id: 2,
-          pid: 0,
-          name: "基础配置",
-          children: [
-            {
-              id: 2.1,
-              pid: 2,
-              name: "仓库管理",
-              // disabled: true,
-              children: [],
-            },
-            {
-              id: 2.2,
-              pid: 2,
-              name: "料架管理",
-              children: [],
-            },
-            {
-              id: 2.3,
-              pid: 2,
-              name: "托盘管理",
-              children: [],
-            },
-            {
-              id: 2.4,
-              pid: 2,
-              name: "组盘管理",
-              children: [],
-            },
-            {
-              id: 2.5,
-              pid: 2,
-              name: "物料管理",
-              children: [],
-            },
-          ],
-        },
-
-      ],
-
-      toData: []
     }
   },
   methods: {
-
-    delet () {
-      this.delModal = true;
-    },
     filterMethod (value, option) {
       return option.toUpperCase().indexOf(value.toUpperCase()) !== -1;
     },
-    getTableData () {
-      let searchJson = {
-        matter_name: '',
-        matter_type: '',
-        start: this.start,
-        limit: this.pageSize
-      };
-      getMentalListPage(searchJson).then((res) => {
-
-        console.log(res)
-        this.total = res.data.total;
-        this.tableData = res.data.data;
-
-      });
+    changeWare (name) {
+      this.ware = name
+    },
+    emptyWare () {
+      this.current = 0;
+      this.emptyModal = true
 
     },
-    show (index) {
-      this.$Modal.info({
-        title: '用户信息',
-        content: `姓名：${this.tableData[index].name}<br>年龄：${this.tableData[index].age}<br>地址：${this.tableData[index].addr}`
-      })
+    mentalWare () {
+      this.current = 0;
+      this.mentalModal = true
     },
-    remove (index) {
-      let self = this;
-      this.$Modal.confirm({
-        title: '用户信息',
-        content: `是否删除此记录`,
-        onOk: function () {
-          this.$Loading.start();
-          let para = { id: index }
-          removeUser(para).then((res) => {
-            self.mockTableData();
-          });
-        }
-      })
-    },
-    changePage (index) {
-      this.page = index;
-      this.start = (index - 1) * this.pageSize;
-      this.getTableData();
-    },
-    addstore () {
-      this.title = '新建角色'
-      this.addstores = true;
-
-    },
-    // 切换模式 现有树形穿梭框模式transfer 和通讯录模式addressList
-
-    changeMode () {
-
-      if (this.mode == "transfer") {
-
-        this.mode = "addressList";
-
+    next () {
+      if (this.current == 1) {
+        this.current = 0;
       } else {
-
-        this.mode = "transfer";
-
+        this.current += 1;
       }
-
     },
-
-    // 监听穿梭框组件添加
-
-    add (fromData, toData, obj) {
-
-      // 树形穿梭框模式transfer时，返回参数为左侧树移动后数据、右侧树移动后数据、移动的        {keys,nodes,halfKeys,halfNodes}对象
-
-      // 通讯录模式addressList时，返回参数为右侧收件人列表、右侧抄送人列表、右侧密送人列表
-
-      console.log("fromData:", fromData);
-
-      console.log("toData:", toData);
-
-      console.log("obj:", obj);
-
+    nexts () {
+      if (this.current == 2) {
+        this.current = 0;
+      } else {
+        this.current += 1;
+      }
     },
-
-    // 监听穿梭框组件移除
-
-    remove (fromData, toData, obj) {
-
-      // 树形穿梭框模式transfer时，返回参数为左侧树移动后数据、右侧树移动后数据、移动的{keys,nodes,halfKeys,halfNodes}对象
-
-      // 通讯录模式addressList时，返回参数为右侧收件人列表、右侧抄送人列表、右侧密送人列表
-
-      console.log("fromData:", fromData);
-
-      console.log("toData:", toData);
-
-      console.log("obj:", obj);
-
+    back () {
+      this.current = 0;
     },
-    nowpage (index) {
-      this.pageSize = index;
-      this.page = 1;
-      this.start = (index - 1) * this.pageSize;
-      this.getTableData();
+    back1 () {
+      this.current = 1;
     },
-
+    next1 () {
+      this.emptyModal = false
+      this.current = 0
+    },
+    next2 () {
+      this.mentalModal = false
+      this.current = 0
+    },
+    submit () {
+      console.log(111)
+      this.current = 1
+    }
   },
 
-  components: { treeTransfer },
   mounted () {
-    this.getTableData();
+
   }
 }
 </script>
+<style lang="scss">
+</style>
+<style lang="scss" scoped>
+.wareHead {
+  background: #ffffff;
+  height: 64px;
+  padding: 10px;
+}
+.line {
+  background: #ffffff;
+  height: 500px;
+  margin-top: 15px;
+  padding: 15px;
+}
+.lines {
+  width: 100%;
+  height: 86px;
+  background-color: rgba(242, 242, 242, 1);
+  position: relative;
+}
+.linging {
+  margin-top: 10px;
+  width: 100%;
+  height: 86px;
+  background-color: rgba(242, 242, 242, 1);
+  position: relative;
+}
+.lineLeft {
+  display: inline-block;
+  width: 60px;
+  height: 100%;
+  background-color: rgba(163, 0, 20, 1);
+  padding: 16px;
+  padding-top: 21px;
+}
+.lineLefts {
+  display: inline-block;
+  width: 60px;
+  height: 100%;
+  background-color: rgba(245, 154, 35, 1);
+  padding: 8px;
+  padding-top: 32px;
+}
+.lineLeftss {
+  display: inline-block;
+  width: 60px;
+  height: 100%;
+  background-color: rgba(85, 85, 85, 1);
+  padding: 16px;
+  padding-top: 21px;
+}
+.lineRight {
+  display: inline-block;
+  height: 86px;
+  position: absolute;
+  padding-left: 15px;
+  padding-top: 13px;
+  width: 94%;
+}
+.delline {
+  width: 100px;
+  // position: absolute;
+  // left: 547px;
+  // top: 34px;
+  color: #a30014;
+  cursor: pointer;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 13px;
+}
+.dellines {
+  width: 100px;
+  // position: absolute;
+  // left: 657px;
+  // top: 34px;
+  color: #169bd5;
+  cursor: pointer;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 13px;
+  margin-left: 20px;
+}
+.lineLeft span {
+  color: #ffffff;
+}
+.lg:focus {
+  border-color: #57a3f3 !important;
+  outline: 0;
+  -webkit-box-shadow: 0 0 0 2px rgba(45, 140, 240, 0.2);
+  box-shadow: 0 0 0 2px rgba(45, 140, 240, 0.2);
+}
+.lg:hover {
+  border-color: #57a3f3 !important;
+}
+</style>

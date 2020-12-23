@@ -1,6 +1,13 @@
+
+
 <template>
   <div>
-    <Form :label-width="80">
+    <div id="print">
+      <div v-for=" item of this.materials" :key="item" style="width: 183px;">
+        <svg v-bind:id="'qq'+item" style="margin-bottom:3px" />
+      </div>
+    </div>
+    <Form :label-width="100">
       <Row>
         <Col span="8">
           <FormItem label="托盘信息：">
@@ -32,7 +39,7 @@
         <Button type="primary">查&nbsp;&nbsp;&nbsp;询</Button>
       </Col>
     </Row>
-    <div id="print">
+    <div>
       <Table :context="self" :height="400" :data="tableData" :columns="tableColumns" stripe border></Table>
     </div>
     <div style="margin: 10px;overflow: hidden">
@@ -130,7 +137,9 @@
   </div>
 </template>
 <script>
+import jsbarcode from 'jsbarcode'
 import treeTransfer from 'el-tree-transfer'
+import { getLodop } from "../../tools/lodop";
 import {
   getUserListPage,
   getMentalListPage,
@@ -152,6 +161,7 @@ export default {
       addMaterials: false,
       delModal: false,
       tableData: [],
+      materials: ['12345678', '87654321'],
 
 
       store: {
@@ -176,44 +186,33 @@ export default {
       page: 1,
       tableColumns: [
         {
-          title: '行号',
-          key: 'matter_extend',
+          title: '姓名',
+          key: 'xt_userinfo_realName',
           align: 'center',
-          sortable: true
 
         },
         {
-          title: '名称',
-          key: 'matter_name',
+          title: '账号',
+          key: 'xt_userinfo_name',
           align: 'center',
           sortable: false
 
         },
         {
-          title: '编码',
+          title: '角色',
           align: 'center',
-          key: 'matter_code',
+          key: 'xt_role_name',
           width: 100
         },
         {
-          title: '型号',
+          title: '所属组织',
           align: 'center',
-          key: 'matter_marking'
+          key: 'xt_departinfo_name'
         },
         {
-          title: '类型',
+          title: '状态',
           align: 'center',
-          key: 'matter_type'
-        },
-        {
-          title: '单位',
-          align: 'center',
-          key: 'matter_unit'
-        },
-        {
-          title: '品牌',
-          align: 'center',
-          key: 'matter_brand'
+          key: 'xt_userinfo_state'
         },
         // {
         //   title: '性别',
@@ -251,7 +250,8 @@ export default {
                 style: { marginLeft: '10px' },
                 on: {
                   click: () => {
-                    this.printpage();
+                    // this.printpage();
+                    this.getPrint()
 
                   }
                 }
@@ -342,12 +342,18 @@ export default {
     },
     getTableData () {
       let searchJson = {
-        matter_name: '',
-        matter_type: '',
+        searchJson: { xt_userinfo_realName: this.meInfo },
+        xt_departinfo_id: '',
+        xt_departinfo_name: '',
+        xt_post_name: '',
+        xt_userinfo_isDelete: '',
+        xt_userinfo_name: '',
+        xt_userinfo_realName: this.meInfo,
+        xt_userinfo_state: '0',
         start: this.start,
         limit: this.pageSize
       };
-      getMentalListPage(searchJson).then((res) => {
+      getUserListPage(searchJson).then((res) => {
 
         console.log(res)
         this.total = res.data.total;
@@ -445,14 +451,45 @@ export default {
       document.body.innerHTML = newstr;
       window.print();
       document.body.innerHTML = oldstr;
-      return false;
-    }
+      window.location.reload();
+      // return false;
+    },
+    getPrint () {
+
+      let LODOP = getLodop();
+      for (let i = 0; i < this.materials.length; i++) {
+        //打印初始化，
+        // LODOP.PRINT_INIT("");
+        LODOP.SET_PRINT_STYLE("FontSize", 11);//打印区域的字体大小
+        LODOP.SET_PRINT_PAGESIZE(0, 490, 211, "");//打印区域的整体尺寸
+        //设置打印模式PRINT_NOCOLLATE非逐份打印
+        LODOP.SET_PRINT_STYLEA(2, "FontSize", 11);
+        LODOP.SET_PRINT_STYLEA(2, "FontColor", 0);
+        LODOP.ADD_PRINT_BARCODE(125, 42, 130, 47, "128Auto", this.materials[i]);
+
+
+        // LODOP.PRINT("");
+        LODOP.PREVIEW();
+      }
+    },
 
   },
 
   components: { treeTransfer },
   mounted () {
     this.getTableData();
-  }
+    for (let item of this.materials) {
+      jsbarcode(
+        '#qq' + item,
+        item,
+        { marginRight: 8, height: 50 } // 右边距
+      )
+    }
+  },
+  created () {
+    console.clear()
+
+    // 不要在create时调用jsbarcode库，此时相关DOM还未加载。
+  },
 }
 </script>

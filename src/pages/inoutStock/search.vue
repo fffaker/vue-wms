@@ -3,20 +3,38 @@
     <Form :label-width="80">
       <Row>
         <Col span="8">
-          <FormItem label="仓库信息">
-            <Input v-model="storeInfo" placeholder="搜索仓库名称、备注"></Input>
+          <FormItem label="仓库">
+            <Select v-model="scan.store">
+              <Option value="1号仓库">1号仓库</Option>
+              <Option value="2号仓库">2号仓库</Option>
+            </Select>
+          </FormItem>
+        </Col>
+        <Col span="8">
+          <FormItem label="物料信息">
+            <Input v-model="scan.mental" placeholder="搜索物料名称、编码、型号"></Input>
+          </FormItem>
+        </Col>
+        <Col span="6">
+          <FormItem label="物料类型" prop="type">
+            <treeselect
+              v-model="scan.type"
+              :multiple="false"
+              :show-count="true"
+              :options="options"
+            />
           </FormItem>
         </Col>
       </Row>
     </Form>
     <Row style="margin-bottom:20px">
-      <Col span="5">
-        <Button type="primary" @click="addstore">新建仓库</Button>
-      </Col>
-      <!-- <Col span="2" offset="15">
-        <Button type="primary" @click="reset">重&nbsp;&nbsp;&nbsp;置</Button>
+      <!-- <Col span="5">
+        <Button type="primary" @click="addstore">重置</Button>
       </Col>-->
-      <Col span="2" offset="17">
+      <Col span="2" offset="18">
+        <Button type="primary" @click="reset">重&nbsp;&nbsp;&nbsp;置</Button>
+      </Col>
+      <Col span="2">
         <Button type="primary">查&nbsp;&nbsp;&nbsp;询</Button>
       </Col>
     </Row>
@@ -116,7 +134,8 @@
   </div>
 </template>
 <script>
-import treeTransfer from 'el-tree-transfer'
+// import treeTransfer from 'el-tree-transfer'
+import Treeselect from '@riophae/vue-treeselect'
 import {
   getUserListPage,
   getMentalListPage,
@@ -125,10 +144,29 @@ import {
   addUsers
 } from '../../api/api';
 export default {
+  components: { Treeselect },
+  name: 'component-tree',
   data () {
     return {
       defaultProps: { label: "name", children: "children" },
       title: '',
+      options: [{
+        id: 'a',
+        label: 'a',
+        children: [{
+          id: 'aa',
+          label: 'aa',
+        }, {
+          id: 'ab',
+          label: 'ab',
+        }],
+      }, {
+        id: 'b',
+        label: 'b',
+      }, {
+        id: 'c',
+        label: 'c',
+      }],
       titles: ["待选菜单", "已选菜单"],
       mode: "transfer",
       self: this,
@@ -137,7 +175,11 @@ export default {
       delModal: false,
       tableData: [],
       storeInfo: '',
-
+      scan: {
+        store: '',
+        mental: '',
+        type: null
+      },
       store: {
         textarea: '',
         name: '',
@@ -349,9 +391,10 @@ export default {
       this.start = (index - 1) * this.pageSize;
       this.getTableData();
     },
-    addstore () {
-      this.title = '新建角色'
-      this.addstores = true;
+    reset () {
+      this.scan.mental = ''
+      this.scan.type = null
+      this.scan.store = ''
 
     },
     // 切换模式 现有树形穿梭框模式transfer 和通讯录模式addressList
@@ -410,7 +453,7 @@ export default {
 
   },
 
-  components: { treeTransfer },
+  // components: { treeTransfer },
   mounted () {
     this.getTableData();
   }

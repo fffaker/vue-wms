@@ -74,7 +74,7 @@
       </div>
     </div>
     <div style="display:inlin-block;width:73%;background:#fff;margin-left: 10px;padding-top: 30px;">
-      <Form :label-width="80">
+      <Form :label-width="100">
         <Row>
           <Col span="8">
             <FormItem label="人员信息：">
@@ -82,11 +82,11 @@
             </FormItem>
           </Col>
           <Col span="2" offset="1">
-            <Button type="primary">查&nbsp;&nbsp;&nbsp;询</Button>
+            <Button type="primary" @click="search">查&nbsp;&nbsp;&nbsp;询</Button>
           </Col>
           <Col span="5">
-          <Button type="primary" @click="editPersons">添加人员</Button>
-        </Col>
+            <Button type="primary" @click="editPersons">添加人员</Button>
+          </Col>
         </Row>
       </Form>
       <!-- <Row style="margin-bottom:20px">
@@ -94,9 +94,18 @@
         <Col span="2" offset="14">
           <Button type="primary" @click="reset">重&nbsp;&nbsp;&nbsp;置</Button>
         </Col>
-      </Row> -->
-      <div style="padding:10px"><Table :context="self" :height="400" :data="tableData" :columns="tableColumns" stripe border></Table></div>
-      
+      </Row>-->
+      <div style="padding:10px">
+        <Table
+          :context="self"
+          :height="400"
+          :data="tableData"
+          :columns="tableColumns"
+          stripe
+          border
+        ></Table>
+      </div>
+
       <div style="margin: 10px;overflow: hidden">
         <div style="float: right;">
           <Page
@@ -163,6 +172,11 @@
           </Col>
         </Row>
       </Form>
+      <div slot="footer">
+        <!-- <Button style="margin-right:300px" type="error" @click="delet">删除</Button> -->
+        <Button type="text">取消</Button>
+        <Button type="primary" @click="addPeople">保存</Button>
+      </div>
     </Modal>
     <!-- 编辑模态框 -->
     <Modal
@@ -250,7 +264,8 @@ import {
   getUserListPage,
   removeUser,
   editUser,
-  
+  getOrgTree,
+
 } from '../../api/api';
 import Treeselect from '@riophae/vue-treeselect'
 // import the styles
@@ -289,46 +304,46 @@ export default {
       },
       setTree: [{
         id: 1,
-        name: '一级 1',
+        name: '生产部',
         children: [{
           id: 4,
-          name: '二级 1-1',
+          name: '车间',
           children: [{
             id: 9,
-            name: '三级 1-1-1'
+            name: '车间1'
           }, {
             id: 10,
-            name: '三级 1-1-2'
+            name: '车间2'
           }]
         }]
       }, {
         id: 2,
-        name: '一级 2',
+        name: '采购部',
         children: [{
           id: 5,
-          name: '二级 2-1'
+          name: '采购组1'
         }, {
           id: 6,
-          name: '二级 2-2'
+          name: '采购组2'
         }]
       }, {
         id: 3,
-        name: '一级 3',
+        name: '销售部',
         children: [{
           id: 7,
-          name: '二级 3-1'
+          name: '市场部'
         }, {
           id: 8,
-          name: '二级 3-2',
+          name: '分销部',
           children: [{
             id: 11,
-            name: '三级 3-2-1'
+            name: '分销组1'
           }, {
             id: 12,
-            name: '三级 3-2-2'
+            name: '分销组2'
           }, {
             id: 13,
-            name: '三级 3-2-3'
+            name: '分销组3'
           }]
         }]
       }],
@@ -337,26 +352,53 @@ export default {
       //   label: 'label'
       // },
       options: [{
-        id: 'a',
-        label: 'a',
+        id: 1,
+        label: '生产部',
         children: [{
-          id: 'aa',
-          label: 'aa',
+          id: 4,
+          label: '车间',
+          children: [{
+            id: 9,
+            label: '车间1'
+          }, {
+            id: 10,
+            label: '车间2'
+          }]
+        }]
+      }, {
+        id: 2,
+        label: '采购部',
+        children: [{
+          id: 5,
+          label: '采购组1'
         }, {
-          id: 'ab',
-          label: 'ab',
-        }],
+          id: 6,
+          label: '采购组2'
+        }]
       }, {
-        id: 'b',
-        label: 'b',
-      }, {
-        id: 'c',
-        label: 'c',
+        id: 3,
+        label: '销售部',
+        children: [{
+          id: 7,
+          label: '市场部'
+        }, {
+          id: 8,
+          label: '分销部',
+          children: [{
+            id: 11,
+            label: '分销组1'
+          }, {
+            id: 12,
+            label: '分销组2'
+          }, {
+            id: 13,
+            label: '分销组3'
+          }]
+        }]
       }],
       self: this,
       pageSize: 10,
       start: 0,
-
       addPerson: false,
       editPerson: false,
       delModal: false,
@@ -413,7 +455,6 @@ export default {
           title: '姓名',
           key: 'xt_userinfo_realName',
           align: 'center',
-          sortable: true
 
         },
         {
@@ -465,6 +506,19 @@ export default {
     }
   },
   methods: {
+    addPeople () {
+      console.log(this.person.name, this.person.role, this.person.account, this.person.orz)
+    },
+    getTree () {
+      let searchJson = {
+        id: '',
+      };
+      getOrgTree(searchJson).then((res) => {
+
+        console.log(res)
+
+      });
+    },
     reset () {
       this.meInfo = '';
       this.meType = null
@@ -475,25 +529,18 @@ export default {
     filterMethod (value, option) {
       return option.toUpperCase().indexOf(value.toUpperCase()) !== -1;
     },
+    search () {
+      this.getTableData();
+    },
     getTableData () {
-      // let para = {
-      //   page: this.page
-      // };
-      // this.$Loading.start();
-      // getUserListPage(para).then((res) => {
-      //   this.$Loading.finish();
-      //   // console.log(res)
-      //   this.total = res.data.total;
-      //   this.tableData = res.data.users;
-
-      // });
       let searchJson = {
+        searchJson: { xt_userinfo_realName: this.meInfo },
         xt_departinfo_id: '',
         xt_departinfo_name: '',
         xt_post_name: '',
         xt_userinfo_isDelete: '',
         xt_userinfo_name: '',
-        xt_userinfo_realName: '',
+        xt_userinfo_realName: this.meInfo,
         xt_userinfo_state: '0',
         start: this.start,
         limit: this.pageSize
@@ -536,7 +583,7 @@ export default {
     nowpage (index) {
       this.pageSize = index;
       this.page = 1;
-      this.start = (index - 1) * this.pageSize;
+      this.start = (this.page - 1) * this.pageSize;
       this.getTableData();
     },
     editPersons () {
@@ -683,7 +730,8 @@ export default {
   },
   created () {
     // 初始值
-    this.startId = this.NODE_ID_START
+    this.startId = this.NODE_ID_START;
+    this.getTree()
   },
   mounted () {
     this.getTableData();
@@ -739,7 +787,7 @@ export default {
   // 高亮显示按钮
   .is-current {
     & > .el-tree-node__content {
-      background-color:#99c4f0!important;
+      background-color: #99c4f0 !important;
       .comp-tr-node--btns {
         @extend .show-btns;
       }

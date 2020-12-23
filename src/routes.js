@@ -17,6 +17,10 @@ import inWarehouse from "./pages/inoutStock/inWarehouse.vue";
 import exWarehouse from "./pages/inoutStock/exWarehouse.vue";
 import search from "./pages/inoutStock/search.vue";
 import record from "./pages/inoutStock/record.vue";
+import mentalBind from "./pages/inoutStock/mentalBind.vue";
+import mentalUnbind from "./pages/inoutStock/mentalUnbind.vue";
+import wareScene from "./pages/inoutStock/wareScene.vue";
+import ware from "./pages/baseConfig/ware.vue";
 
 let routes = [
   {
@@ -72,6 +76,7 @@ let routes = [
     children: [
       { path: "/store", component: store, name: "仓库管理" },
       { path: "/stack", component: stack, name: "料架管理" },
+      { path: "/ware", component: ware, name: "库位管理" },
       { path: "/pallet", component: pallet, name: "托盘管理" },
       { path: "/disk", component: disk, name: "组盘管理" },
       { path: "/mental", component: mental, name: "物料管理" },
@@ -83,8 +88,11 @@ let routes = [
     name: "出入库管理",
     iconCls: "stats-bars",
     children: [
-      { path: "/inWarehouse", component: inWarehouse, name: "入仓" },
-      { path: "/exWarehouse", component: exWarehouse, name: "出库" },
+      { path: "/inWarehouse", component: inWarehouse, name: "托盘入库" },
+      { path: "/exWarehouse", component: exWarehouse, name: "托盘出库" },
+      { path: "/mentalBind", component: mentalBind, name: "物料绑定" },
+      { path: "/mentalUnbind", component: mentalUnbind, name: "物料解绑" },
+      { path: "/wareScene", component: wareScene, name: "库位全景" },
       { path: "/search", component: search, name: "库存查询" },
       { path: "/record", component: record, name: "出入库记录" },
     ],

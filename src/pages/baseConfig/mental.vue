@@ -6,11 +6,15 @@
         <Button type="primary" style="margin-left: 20px;" @click="addRole">编辑类型</Button>
       </div>-->
       <div style="padding-top: 30px;">
-        <el-input placeholder="输入关键字进行过滤" v-model="filterText" style='width: 195px;margin-left: 12px;'></el-input>
+        <el-input
+          placeholder="输入关键字进行过滤"
+          v-model="filterText"
+          style="width: 195px;margin-left: 12px;"
+        ></el-input>
         <div v-loading="isLoading" class="comp-tree">
           <!-- <el-button class="comp-tr-top" type="primary" size="small" @click="handleAddTop">添加顶级节点</el-button> -->
           <!-- tree -->
-          
+
           <el-tree
             ref="SlotTree"
             class="filter-tree"
@@ -80,15 +84,15 @@
         <Row>
           <Col span="8">
             <FormItem label="物料信息">
-              <Input v-model="meInfo" placeholder="搜索物料编码、名称、型号" ></Input>
+              <Input v-model="meInfo" placeholder="搜索物料编码、名称、型号"></Input>
             </FormItem>
           </Col>
           <Col span="2" offset="1">
-          <Button type="primary">查&nbsp;&nbsp;&nbsp;询</Button>
-        </Col>
-        <Col span="5">
-          <Button type="primary" @click="addMaterialss">新建物料</Button>
-        </Col>
+            <Button type="primary">查&nbsp;&nbsp;&nbsp;询</Button>
+          </Col>
+          <Col span="5" offset="1">
+            <Button type="primary" @click="addMaterialss">新建物料</Button>
+          </Col>
         </Row>
       </Form>
       <!-- <Row style="margin-bottom:20px">
@@ -96,9 +100,16 @@
         <Col span="2" offset="14">
           <Button type="primary" @click="reset">重&nbsp;&nbsp;&nbsp;置</Button>
         </Col>
-      </Row> -->
+      </Row>-->
       <div style="padding:10px">
-      <Table :context="self" :height="400" :data="tableData" :columns="tableColumns" stripe border></Table>
+        <Table
+          :context="self"
+          :height="400"
+          :data="tableData"
+          :columns="tableColumns"
+          stripe
+          border
+        ></Table>
       </div>
       <div style="margin: 10px;overflow: hidden">
         <div style="float: right;">
@@ -346,52 +357,54 @@ export default {
         pid: 0,
         children: []
       },
-      setTree: [{id:0,name:'物料类型',children:[ {
-        id: 1,
-        name: '一级 1',
-        children: [{
-          id: 4,
-          name: '二级 1-1',
+      setTree: [{
+        id: 0, name: '物料类型', children: [{
+          id: 1,
+          name: '一级 1',
           children: [{
-            id: 9,
-            name: '三级 1-1-1'
+            id: 4,
+            name: '二级 1-1',
+            children: [{
+              id: 9,
+              name: '三级 1-1-1'
+            }, {
+              id: 10,
+              name: '三级 1-1-2'
+            }]
+          }]
+        }, {
+          id: 2,
+          name: '一级 2',
+          children: [{
+            id: 5,
+            name: '二级 2-1'
           }, {
-            id: 10,
-            name: '三级 1-1-2'
+            id: 6,
+            name: '二级 2-2'
+          }]
+        }, {
+          id: 3,
+          name: '一级 3',
+          children: [{
+            id: 7,
+            name: '二级 3-1'
+          }, {
+            id: 8,
+            name: '二级 3-2',
+            children: [{
+              id: 11,
+              name: '三级 3-2-1'
+            }, {
+              id: 12,
+              name: '三级 3-2-2'
+            }, {
+              id: 13,
+              name: '三级 3-2-3'
+            }]
           }]
         }]
-      }, {
-        id: 2,
-        name: '一级 2',
-        children: [{
-          id: 5,
-          name: '二级 2-1'
-        }, {
-          id: 6,
-          name: '二级 2-2'
-        }]
-      }, {
-        id: 3,
-        name: '一级 3',
-        children: [{
-          id: 7,
-          name: '二级 3-1'
-        }, {
-          id: 8,
-          name: '二级 3-2',
-          children: [{
-            id: 11,
-            name: '三级 3-2-1'
-          }, {
-            id: 12,
-            name: '三级 3-2-2'
-          }, {
-            id: 13,
-            name: '三级 3-2-3'
-          }]
-        }]
-      }]}
-       
+      }
+
       ],
       // defaultProps: {
       //   children: 'children',
@@ -754,7 +767,7 @@ export default {
   max-width: 700px;
   max-height: 80vh;
   padding: 2em;
-  padding-left: 5px!important;
+  padding-left: 5px !important;
   overflow: auto;
   // 顶部按钮
   .comp-tr-top {
@@ -789,7 +802,7 @@ export default {
   // 高亮显示按钮
   .is-current {
     & > .el-tree-node__content {
-      background-color:#99c4f0!important;
+      background-color: #99c4f0 !important;
       .comp-tr-node--btns {
         @extend .show-btns;
       }
