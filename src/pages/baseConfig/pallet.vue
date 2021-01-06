@@ -3,9 +3,13 @@
 <template>
   <div>
     <div id="print">
-      <div v-for=" item of this.materials" :key="item" style="width: 183px;">
-        <svg v-bind:id="'qq'+item" style="margin-bottom:3px" />
+      <div v-for="item of this.materials" :key="item.value" style="width:182px">
+        <p style="text-align: center;">{{item.name}}</p>
+        <svg v-bind:id="'qq'+item.name" />
       </div>
+    </div>
+    <div>
+      <img :src="this.url" id="printme" />
     </div>
     <Form :label-width="100">
       <Row>
@@ -138,6 +142,7 @@
 </template>
 <script>
 import jsbarcode from 'jsbarcode'
+import printTemplate from 'print-template'
 import treeTransfer from 'el-tree-transfer'
 import { getLodop } from "../../tools/lodop";
 import {
@@ -150,6 +155,7 @@ import {
 export default {
   data () {
     return {
+      url: '',
       type: '',
       palletInfo: '',
       defaultProps: { label: "name", children: "children" },
@@ -161,7 +167,7 @@ export default {
       addMaterials: false,
       delModal: false,
       tableData: [],
-      materials: ['12345678', '87654321'],
+      materials: [{ name: '托盘1', value: '12345678' }, { name: "小型断路器5mm", value: '01.001' }],
 
 
       store: {
@@ -330,9 +336,74 @@ export default {
     }
   },
   methods: {
+    printCode () {
+      let template = new printTemplate()
+      // console.log(template)
+      // 模板数据
+      let yto = {
+        name: 'yto',       // 模板名称
+        unit: 'mm',       // 尺寸 默认mm    mm / px
+        size: [70, 45], // 模板大小  宽 76mm / 高130mm
+        fixed: [          // 固定内容 比如：线条 、logo 广告、固定字体 
+          // 个人觉得 制作一个透明的底图 不需要一条线一条线设置
+          { type: 'line', x: 0, y: 0, length: 70, orientation: 'l' },
+          // { type: 'line', x: 2, y: 12, orientation: 'p', length: 116 },
+          // { type: 'line', x: 74, y: 12, orientation: 'p', length: 116 },
+          // { type: 'line', x: 2, y: 27, length: 72 },
+          // { type: 'line', x: 2, y: 35, length: 72 },
+          // { type: 'line', x: 2, y: 41, length: 52 },
+          // { type: 'line', x: 54, y: 35, orientation: 'p', length: 32 },
+          // { type: 'line', x: 54, y: 49, length: 20 },
+          // { type: 'line', x: 2, y: 59, length: 72 },
+          // { type: 'line', x: 2, y: 67, length: 72 },
+          // { type: 'line', x: 2, y: 77, length: 72 },
+          // { type: 'line', x: 2, y: 110, length: 72 },
+          // { type: 'line', x: 2, y: 128, length: 72 },
+          // { type: 'text', fontSize: 3.8, fontWeight: 700, x: 66, y: 2, default: '货到\n付款' },   // 固定文字   \n 换行  也可以设置 maxWidth:3.8*2  自动换行             
+        ],
+        data: {                    // 动态数据
+          name: { type: 'text', x: 30, y: 26, fontSize: 3.5 },
+          code: { type: 'barcode', x: 15, y: 5, format: 'CODE128A', width: 4, margin: 0, fontSize: 3.3, fontOptions: 'bold', displayValue: true, height: 13 },
+
+        }
+
+      }
+
+      // 添加模板 
+      template.push(yto)
+
+      // 传入数据 
+      let data = [{ name: '托盘1', code: '1000111' }, { name: '托盘2', code: '1000112' }]
+
+      // 打印 
+      template.print('yto', data).then(pdf => {
+        // 返回 jspdf
+        // blob 地址
+        // if (pdf) { alert(1) } else {
+        //   alert(2)
+        // }
+        let uri = pdf.output('bloburi', { filename: '打印文件' });
+        console.log(pdf)
+        let xx = pdf.createImageInfo()
+        console.log(xx)
+        this.url = uri;
+        // var iframe = document.createElement('iframe');
+        // iframe.src = uri;
+        // document.body.appendChild(iframe);
+        // 下载保存
+        // pdf.save('打印文件');
+
+      })
+
+    },
     reset () {
       this.palletInfo = '';
       this.type = ''
+      // 创建打印模板 
+      // this.getPrint()
+      this.printpage()
+
+
     },
     delet () {
       this.delModal = true;
@@ -459,13 +530,19 @@ export default {
       let LODOP = getLodop();
       for (let i = 0; i < this.materials.length; i++) {
         //打印初始化，
-        // LODOP.PRINT_INIT("");
+        LODOP.PRINT_INIT("");
         LODOP.SET_PRINT_STYLE("FontSize", 11);//打印区域的字体大小
-        LODOP.SET_PRINT_PAGESIZE(0, 490, 211, "");//打印区域的整体尺寸
+        LODOP.SET_PRINT_PAGESIZE(1, '70mm', '45mm', "");//打印区域的整体尺寸
         //设置打印模式PRINT_NOCOLLATE非逐份打印
-        LODOP.SET_PRINT_STYLEA(2, "FontSize", 11);
-        LODOP.SET_PRINT_STYLEA(2, "FontColor", 0);
-        LODOP.ADD_PRINT_BARCODE(125, 42, 130, 47, "128Auto", this.materials[i]);
+        // LODOP.SET_PRINT_STYLEA(2, "FontSize", 11);
+        // LODOP.SET_PRINT_STYLEA(2, "FontColor", 0);
+        LODOP.ADD_PRINT_BARCODE(50, 50, '45mm', '10mm', "128Auto", this.materials[i]);
+        LODOP.ADD_PRINT_SETUP_BKIMG("<img border='0' src='1.jpg' style='z-index: -1'/>");
+        LODOP.SET_SHOW_MODE("BKIMG_IN_PREVIEW", 0);
+        LODOP.SET_SHOW_MODE("BKIMG_PRINT", 0);
+        // LODOP.SET_SHOW_MODE("BKIMG_LEFT", 1);
+        // LODOP.SET_SHOW_MODE("BKIMG_TOP", 1);
+        // LODOP.SET_SHOW_MODE("LANGUAGE", 0);
 
 
         // LODOP.PRINT("");
@@ -480,14 +557,14 @@ export default {
     this.getTableData();
     for (let item of this.materials) {
       jsbarcode(
-        '#qq' + item,
-        item,
+        '#qq' + item.name,
+        item.value,
         { marginRight: 8, height: 50 } // 右边距
       )
     }
   },
   created () {
-    console.clear()
+    this.printCode()
 
     // 不要在create时调用jsbarcode库，此时相关DOM还未加载。
   },

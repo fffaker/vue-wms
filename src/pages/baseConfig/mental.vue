@@ -87,20 +87,22 @@
               <Input v-model="meInfo" placeholder="搜索物料编码、名称、型号"></Input>
             </FormItem>
           </Col>
-          <Col span="2" offset="1">
-            <Button type="primary">查&nbsp;&nbsp;&nbsp;询</Button>
-          </Col>
-          <Col span="5" offset="1">
-            <Button type="primary" @click="addMaterialss">新建物料</Button>
-          </Col>
         </Row>
       </Form>
-      <!-- <Row style="margin-bottom:20px">
-        
-        <Col span="2" offset="14">
-          <Button type="primary" @click="reset">重&nbsp;&nbsp;&nbsp;置</Button>
+      <Row style="margin-bottom:20px">
+        <Col span="3" offset="1">
+          <Button type="primary" @click="addMaterialss">新建物料</Button>
         </Col>
-      </Row>-->
+        <Col span="3">
+          <Button type="primary" @click="uploadMaterial">导入物料</Button>
+        </Col>
+        <Col span="2" offset="14">
+          <Button type="primary">查&nbsp;&nbsp;&nbsp;询</Button>
+        </Col>
+        <!-- <Col span="2" offset="14">
+          <Button type="primary" @click="reset">重&nbsp;&nbsp;&nbsp;置</Button>
+        </Col>-->
+      </Row>
       <div style="padding:10px">
         <Table
           :context="self"
@@ -124,6 +126,27 @@
         </div>
       </div>
     </div>
+    <!-- 导入模态框 -->
+    <Modal v-model="upLoad" width="560" title="导入物料">
+      <el-upload
+        class="upload-demo"
+        ref="upload"
+        action="https://jsonplaceholder.typicode.com/posts/"
+        :on-preview="handlePreview"
+        :on-remove="handleRemove"
+        :file-list="fileList"
+        :auto-upload="false"
+      >
+        <el-button slot="trigger" size="small" type="primary">选取文件</el-button>
+        <el-button
+          style="margin-left: 10px;"
+          size="small"
+          type="success"
+          @click="submitUpload"
+        >上传到服务器</el-button>
+        <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
+      </el-upload>
+    </Modal>
     <!-- 新增模态框 -->
     <Modal
       v-model="addMaterial"
@@ -341,7 +364,9 @@ export default {
   // },
   data () {
     return {
+      fileList: [],
       filterText: '',
+      upLoad: false,
       isLoading: false,// 是否加载
       // setTree: [],// tree数据
       NODE_KEY: 'id',// id对应字段
@@ -565,6 +590,19 @@ export default {
     }
   },
   methods: {
+    //上传
+    submitUpload () {
+      this.$refs.upload.submit();
+    },
+    handleRemove (file, fileList) {
+      console.log(file, fileList);
+    },
+    handlePreview (file) {
+      console.log(file);
+    },
+    uploadMaterial () {
+      this.upLoad = true
+    },
     reset () {
       this.meInfo = '';
       this.meType = null

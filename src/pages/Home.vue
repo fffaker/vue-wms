@@ -3,7 +3,8 @@
   background: #f5f7f9;
   position: relative;
   overflow: hidden;
-  height: 100%;
+  min-height: 100%;
+  /* height: 100%; */
 }
 .layout-breadcrumb {
   padding: 10px 15px 0;
@@ -14,7 +15,7 @@
   overflow: auto;
   /* background: #fff; */
   border-radius: 4px;
-  height: 80%;
+  height: 100%;
 }
 .layout-content-main {
   /* padding: 10px; */
@@ -34,9 +35,10 @@
 .layout-logo-left {
   width: 90%;
   height: 60px;
-  line-height: 60px;
-  font-size: 28px;
+  /* line-height: 60px; */
+  /* font-size: 28px; */
   text-align: center;
+  padding-top: 5px;
   /*  background: #5b6270;
         border-radius: 3px;
         margin: 15px auto;*/
@@ -84,7 +86,7 @@
 }
 </style>
 <template>
-  <div class="layout" :class="{'layout-hide-text': spanLeft < 5}">
+  <div class="layout" :class="{'layout-hide-text': spanLeft < 4}">
     <Row type="flex">
       <i-col :span="spanLeft" class="layout-menu-left">
         <Menu
@@ -97,12 +99,13 @@
           accordion
         >
           <div class="layout-logo-left">
-            <Icon type="paper-airplane" :size="logoSize" v-show="logoIsDisplay"></Icon>
-            <span class="layout-text">Admin 管理系统</span>
+            <img src="../assets/logo.png" alt />
+            <!-- <Icon type="paper-airplane" :size="logoSize" v-show="logoIsDisplay"></Icon> -->
+            <p style="color:blue;font-size:12px">金猫 GoLden Cat</p>
           </div>
           <template
             v-for="(item,index) in $router.options.routes"
-            v-if="spanLeft >= 5 && !item.hidden"
+            v-if="spanLeft >= 4 && !item.hidden"
           >
             <Submenu :name="item.name" v-if="!item.leaf">
               <template slot="title">
@@ -122,7 +125,7 @@
           </template>
           <template
             v-for="(item,index) in $router.options.routes"
-            v-if="spanLeft < 5 && !item.hidden"
+            v-if="spanLeft < 4 && !item.hidden"
           >
             <Dropdown
               placement="right-start"
@@ -159,7 +162,7 @@
       <i-col :span="spanRight">
         <div class="layout-header">
           <i-button type="text" @click="toggleClick">
-            <Icon type="navicon" size="32"></Icon>
+            <Icon type="md-menu" size="32"></Icon>
           </i-button>
           <div class="userinfo">
             <Dropdown placement="bottom-end">
@@ -208,14 +211,17 @@
 </template>
 
 <script>
+import {
+  logout
+} from '../api/api';
 export default {
   data () {
     return {
       openNames: [this.$route.matched[0].name],
-      curUserName: sessionStorage.getItem('user').replace(/\"/g, ""),
+      curUserName: localStorage.getItem('user').replace(/\"/g, ""),
       modeType: "vertical",
-      spanLeft: 5,
-      spanRight: 19,
+      spanLeft: 4,
+      spanRight: 20,
       logoIsDisplay: false,
       loading: true,
       modal1: false,
@@ -239,10 +245,10 @@ export default {
   },
   computed: {
     iconSize () {
-      return this.spanLeft === 5 ? 14 : 24;
+      return this.spanLeft === 4 ? 14 : 24;
     },
     logoSize () {
-      if (this.spanLeft !== 5) {
+      if (this.spanLeft !== 4) {
         this.logoIsDisplay = true;
         return 50;
       } else {
@@ -253,12 +259,12 @@ export default {
   },
   methods: {
     toggleClick () {
-      if (this.spanLeft === 5) {
+      if (this.spanLeft === 4) {
         this.spanLeft = 1;
         this.spanRight = 23;
       } else {
-        this.spanLeft = 5;
-        this.spanRight = 19;
+        this.spanLeft = 4;
+        this.spanRight = 20;
       }
     },
     modifyPassWord () {
@@ -266,6 +272,12 @@ export default {
     },
     logout () {
       this.$router.push('/login');
+      logout().then((res) => {
+        if (res.data.code == 0) {
+          localStorage.setItem("token", '');
+        }
+      })
+      // localStorage.setItem("token", '');
     },
     comfirmModifyPS () {
       return false;

@@ -13,12 +13,15 @@ import Vue from "vue";
 
 // axios 配置
 axios.defaults.timeout = 10000;
-axios.defaults.baseURL = "/wp-json/wp/v2";
-
-// 请求拦截器
+// axios.defaults.baseURL = "/wp-json/wp/v2";
+// alert(1);
+//请求拦截器;
 axios.interceptors.request.use(
   (config) => {
-    Vue.prototype.$loading.show();
+    if (localStorage.getItem("token")) {
+      config.headers.token = localStorage.getItem("token");
+    }
+
     return config;
   },
   (err) => Promise.reject(err)
@@ -27,11 +30,11 @@ axios.interceptors.request.use(
 // 响应拦截器
 axios.interceptors.response.use(
   (response) => {
-    Vue.prototype.$loading.hide();
+    // Vue.prototype.$loading.hide();
     return response;
   },
   (err) => {
-    Vue.prototype.$loading.hide();
+    // Vue.prototype.$loading.hide();
     if (err.response) {
       switch (err.response.status) {
         case 404:
@@ -43,6 +46,15 @@ axios.interceptors.response.use(
         case 500:
           router.replace({
             path: "/error-500",
+            query: { redirect: router.currentRoute.fullPath },
+          });
+          break;
+        case 401:
+          // 返回 401 清除token信息并跳转到登录页面
+          // store.commit(types.LOGOUT);
+          localStorage.removeItem("token");
+          router.replace({
+            path: "login",
             query: { redirect: router.currentRoute.fullPath },
           });
           break;

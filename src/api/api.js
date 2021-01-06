@@ -1,6 +1,6 @@
 import axios from "axios";
 
-let base = "http://192.168.3.196:8703";
+let base = "http://192.168.3.195:8080";
 // let base = "http://192.168.3.15:8703";
 
 export const requestLogin = (params) => {
@@ -25,6 +25,14 @@ export const editUser = (params) => {
 
 export const addUser = (params) => {
   return axios.get(`${base}/user/add`, { params: params });
+};
+//登录
+export const register = (params) => {
+  return axios.post(`${base}/renren-admin/login`, params);
+};
+//登出
+export const logout = (params) => {
+  return axios.post(`${base}/renren-admin/logout`);
 };
 //物料分页
 export const getMentalListPage = (params) => {

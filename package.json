@@ -17,6 +17,7 @@
     "jsbarcode": "^3.11.3",
     "node-sass": "^4.14.1",
     "nprogress": "^0.2.0",
+    "print-template": "^1.2.2",
     "rimraf": "^3.0.2",
     "view-design": "^4.4.0",
     "vue": "^2.2.2",

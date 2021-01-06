@@ -1,9 +1,9 @@
 <template>
   <div>
-    <Form :label-width="80">
+    <Form :label-width="80" style="margin-top:20px;margin-bottom:20px">
       <Row>
         <Col span="8">
-          <FormItem label="仓库信息">
+          <FormItem label="仓库信息:">
             <Input v-model="storeInfo" placeholder="搜索仓库名称、备注"></Input>
           </FormItem>
         </Col>
@@ -48,7 +48,7 @@
         :rules="ruleValidate"
         :label-width="100"
       >
-        <p style="margin-left:-100px">基础信息</p>
+        <!-- <p style="margin-left:-100px">基础信息</p> -->
         <Row>
           <Col span="18">
             <FormItem label="仓库名称：" prop="name">
@@ -84,10 +84,9 @@
             </FormItem>
           </Col>
         </Row>
-
         <Row>
           <Col span="18">
-            <FormItem label="角色描述：">
+            <FormItem label="备注：">
               <Input
                 v-model="store.textarea"
                 type="textarea"
@@ -104,7 +103,6 @@
         <Button type="primary">保存</Button>
       </div>
     </Modal>
-
     <!-- 删除确认框 -->
     <Modal v-model="delModal" title="确认删除">
       <p>确认删除该XXX？</p>
@@ -137,16 +135,12 @@ export default {
       delModal: false,
       tableData: [],
       storeInfo: '',
-
       store: {
         textarea: '',
         name: '',
         type: '',
         admin: '',
-
-
       },
-
       ruleValidate: {
         name: [
           { required: true, message: '请输入仓库名称', trigger: 'blur' }
@@ -155,7 +149,6 @@ export default {
           { required: true, message: '请输入仓库类型', trigger: 'blur' }
         ],
       },
-
       total: 0,
       page: 1,
       tableColumns: [
@@ -167,46 +160,28 @@ export default {
 
         },
         {
-          title: '名称',
+          title: '仓库名称',
           key: 'matter_name',
           align: 'center',
           sortable: false
 
         },
         {
-          title: '编码',
+          title: '仓库类型',
           align: 'center',
           key: 'matter_code',
           width: 100
         },
         {
-          title: '型号',
+          title: '仓库管理员',
           align: 'center',
           key: 'matter_marking'
         },
         {
-          title: '类型',
+          title: '备注',
           align: 'center',
           key: 'matter_type'
         },
-        {
-          title: '单位',
-          align: 'center',
-          key: 'matter_unit'
-        },
-        {
-          title: '品牌',
-          align: 'center',
-          key: 'matter_brand'
-        },
-        // {
-        //   title: '性别',
-        //   key: 'sex',
-        //   align: 'center',
-        //   // render: function (row, column, index) {
-        //   //   return row.sex == 0 ? '男' : '女';
-        //   // }
-        // },
         {
           title: '操作',
           key: 'action',
@@ -233,70 +208,6 @@ export default {
       ],
       pageSize: 10,
       start: 0,
-
-      fromData: [
-
-        {
-          id: 1,
-          pid: 0,
-          name: "系统管理",
-          children: [
-            {
-              id: 1.1,
-              pid: 1,
-              name: "组织人员",
-              children: [],
-            },
-            {
-              id: 1.2,
-              pid: 1,
-              name: "角色管理",
-              children: [],
-            },
-
-          ],
-        },
-        {
-          id: 2,
-          pid: 0,
-          name: "基础配置",
-          children: [
-            {
-              id: 2.1,
-              pid: 2,
-              name: "仓库管理",
-              // disabled: true,
-              children: [],
-            },
-            {
-              id: 2.2,
-              pid: 2,
-              name: "料架管理",
-              children: [],
-            },
-            {
-              id: 2.3,
-              pid: 2,
-              name: "托盘管理",
-              children: [],
-            },
-            {
-              id: 2.4,
-              pid: 2,
-              name: "组盘管理",
-              children: [],
-            },
-            {
-              id: 2.5,
-              pid: 2,
-              name: "物料管理",
-              children: [],
-            },
-          ],
-        },
-
-      ],
-
       toData: []
     }
   },
@@ -324,26 +235,7 @@ export default {
       });
 
     },
-    show (index) {
-      this.$Modal.info({
-        title: '用户信息',
-        content: `姓名：${this.tableData[index].name}<br>年龄：${this.tableData[index].age}<br>地址：${this.tableData[index].addr}`
-      })
-    },
-    remove (index) {
-      let self = this;
-      this.$Modal.confirm({
-        title: '用户信息',
-        content: `是否删除此记录`,
-        onOk: function () {
-          this.$Loading.start();
-          let para = { id: index }
-          removeUser(para).then((res) => {
-            self.mockTableData();
-          });
-        }
-      })
-    },
+
     changePage (index) {
       this.page = index;
       this.start = (index - 1) * this.pageSize;
@@ -352,53 +244,6 @@ export default {
     addstore () {
       this.title = '新建角色'
       this.addstores = true;
-
-    },
-    // 切换模式 现有树形穿梭框模式transfer 和通讯录模式addressList
-
-    changeMode () {
-
-      if (this.mode == "transfer") {
-
-        this.mode = "addressList";
-
-      } else {
-
-        this.mode = "transfer";
-
-      }
-
-    },
-
-    // 监听穿梭框组件添加
-
-    add (fromData, toData, obj) {
-
-      // 树形穿梭框模式transfer时，返回参数为左侧树移动后数据、右侧树移动后数据、移动的        {keys,nodes,halfKeys,halfNodes}对象
-
-      // 通讯录模式addressList时，返回参数为右侧收件人列表、右侧抄送人列表、右侧密送人列表
-
-      console.log("fromData:", fromData);
-
-      console.log("toData:", toData);
-
-      console.log("obj:", obj);
-
-    },
-
-    // 监听穿梭框组件移除
-
-    remove (fromData, toData, obj) {
-
-      // 树形穿梭框模式transfer时，返回参数为左侧树移动后数据、右侧树移动后数据、移动的{keys,nodes,halfKeys,halfNodes}对象
-
-      // 通讯录模式addressList时，返回参数为右侧收件人列表、右侧抄送人列表、右侧密送人列表
-
-      console.log("fromData:", fromData);
-
-      console.log("toData:", toData);
-
-      console.log("obj:", obj);
 
     },
     nowpage (index) {
@@ -410,7 +255,7 @@ export default {
 
   },
 
-  components: { treeTransfer },
+
   mounted () {
     this.getTableData();
   }

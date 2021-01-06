@@ -8,6 +8,7 @@
     </div>
 
     <input
+      v-focus
       class="lg"
       @keyup.enter="submit"
       v-show="current==0"
