@@ -234,6 +234,13 @@ export const inWareList = (id) => {
     {}
   );
 };
+//查询出库队列
+export const outWareList = (id) => {
+  return axios.get(
+    `${base}/renren-admin/basicConfig/warehousingrecord/getOutList/${id}`,
+    {}
+  );
+};
 //出库分页查询
 export const getOutWareListPage = (params) => {
   return axios.get(

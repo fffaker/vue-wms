@@ -33,7 +33,7 @@
       </Form>
     </div>
     <div class="line">
-      <div class="lines">
+      <!-- <div class="lines">
         <div class="lineLeft">
           <span style="font-weight: 600;">出库暂停</span>
         </div>
@@ -58,22 +58,74 @@
           <p style="font-weight: 700;font-size: 15px;margin-top: 8px;">TP202012030002(托盘2)</p>
           <p style="font-size: 15px;color: #7F7F7F;">2号线 -- 2号料架 -- 3行2列</p>
         </div>
-      </div>
-      <div class="linging">
-        <div class="lineLeftss">
+      </div>-->
+      <div class="linging" v-for="item of this.outWareList" :key="item">
+        <div class="lineLeft" v-if="item.warehousingStatus==53">
+          <span style="font-weight: 600;">出库暂停</span>
+        </div>
+        <div class="lineLefts" v-if="item.warehousingStatus==52">
+          <span style="font-weight: 600;color: #ffffff;">出库中</span>
+        </div>
+        <div class="lineLeftss" v-if="item.warehousingStatus==51">
           <span style="font-weight: 600;color: #ffffff;">出库等待</span>
         </div>
-        <div class="lineRight">
+        <div
+          class="lineLeftss"
+          v-if="item.warehousingStatus==50"
+          style="background-color: rgb(75, 121, 2);"
+        >
+          <span style="font-weight: 600;color: #ffffff;">出库完成</span>
+        </div>
+        <div class="lineRight" v-if="item.warehousingStatus==53">
           <div style="display: inline-block;">
-            <p style="font-weight: 700;font-size: 15px;margin-top: 8px;">TP202012030003(托盘3)</p>
-            <p style="font-size: 15px;color: #7F7F7F;">2号线 -- 2号料架 -- 3行5列</p>
+            <p style="font-weight: 700;font-size: 15px;">{{item.palletCode}}({{item.palletName}})</p>
+            <p
+              style="font-size: 15px;color: #7F7F7F;"
+            >{{item.conveyerName}} -- {{item.feederName}} -- {{item.storagebinLine}}行{{item.storagebinRow}}列</p>
+            <p style="font-size: 15px;color: #A30014;">急停故障(DB99.DBX1500.0)</p>
+          </div>
+
+          <div style="float: right;padding-top: 20px;display: flex;width: 180px;">
+            <span class="delline">删除出库队列</span>
+            <span class="dellines">完成出库</span>
+          </div>
+        </div>
+        <div class="lineRight" v-if="item.warehousingStatus==52">
+          <p
+            style="font-weight: 700;font-size: 15px;margin-top: 8px;"
+          >{{item.palletCode}}({{item.palletName}})</p>
+          <p
+            style="font-size: 15px;color: #7F7F7F;"
+          >{{item.conveyerName}} -- {{item.feederName}} -- {{item.storagebinLine}}行{{item.storagebinRow}}列</p>
+        </div>
+        <div class="lineRight" v-if="item.warehousingStatus==51">
+          <div style="display: inline-block;">
+            <p
+              style="font-weight: 700;font-size: 15px;margin-top: 8px;"
+            >{{item.palletCode}}({{item.palletName}})</p>
+            <p
+              style="font-size: 15px;color: #7F7F7F;"
+            >{{item.conveyerName}} -- {{item.feederName}} -- {{item.storagebinLine}}行{{item.storagebinRow}}列</p>
           </div>
           <div style="float: right;padding-top: 20px;display: flex;width: 180px;">
             <span class="dellines" style="margin-left:100px">取消出库</span>
           </div>
         </div>
+        <div class="lineRight" v-if="item.warehousingStatus==50">
+          <div style="display: inline-block;">
+            <p
+              style="font-weight: 700;font-size: 15px;margin-top: 8px;"
+            >{{item.palletCode}}({{item.palletName}})</p>
+            <p
+              style="font-size: 15px;color: #7F7F7F;"
+            >{{item.conveyerName}} -- {{item.feederName}} -- {{item.storagebinLine}}行{{item.storagebinRow}}列</p>
+          </div>
+          <div style="float: right;padding-top: 20px;display: flex;width: 180px;">
+            <span class="dellines" style="margin-left:100px">解绑物料</span>
+          </div>
+        </div>
       </div>
-      <div class="linging">
+      <!-- <div class="linging">
         <div class="lineLeftss" style="background-color: rgb(75, 121, 2);">
           <span style="font-weight: 600;color: #ffffff;">出库完成</span>
         </div>
@@ -86,7 +138,7 @@
             <span class="dellines" style="margin-left:100px">解绑物料</span>
           </div>
         </div>
-      </div>
+      </div>-->
     </div>
 
     <!-- 空托盘出库框 -->
@@ -199,7 +251,8 @@ import {
   getStores,
   getOutWareListPage,
   getDisk,
-  palletOutWare
+  palletOutWare,
+  outWareList
 
 } from '../../api/api';
 import expandRow from './table-expand.vue';
@@ -207,7 +260,7 @@ export default {
   components: { expandRow },
   data () {
     return {
-
+      outWareList: [],
       tableColumns: [
         {
           type: 'selection',
@@ -561,13 +614,13 @@ export default {
       this.ware = res.data.data[0].warehouseName
       this.wareId = res.data.data[0].warehouseId
       let id = this.wareId
-      // inWareList(id).then(
-      //   (res) => {
-      //     if (res.data.code == 0) {
-      //       this.inWareList = res.data.data
-      //     }
-      //   }
-      // )
+      outWareList(id).then(
+        (res) => {
+          if (res.data.code == 0) {
+            this.outWareList = res.data.data
+          }
+        }
+      )
 
     });
 

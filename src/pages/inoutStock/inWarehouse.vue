@@ -33,7 +33,7 @@
       </Form>
     </div>
     <div class="line">
-      <div class="lines">
+      <!-- <div class="lines">
         <div class="lineLeft">
           <span style="font-weight: 600;">入库暂停</span>
         </div>
@@ -58,18 +58,50 @@
           <p style="font-weight: 700;font-size: 15px;margin-top: 8px;">TP202012030002(托盘2)</p>
           <p style="font-size: 15px;color: #7F7F7F;">2号线 -- 2号料架 -- 3行2列</p>
         </div>
-      </div>
-      <div class="linging">
-        <div class="lineLeftss">
+      </div>-->
+      <div class="linging" v-for="item of this.inWareList" :key="item">
+        <div class="lineLeftss" v-if="item.warehousingStatus==1">
           <span style="font-weight: 600;color: #ffffff;">入库等待</span>
         </div>
-        <div class="lineRight">
+        <div class="lineLefts" v-if="item.warehousingStatus==2">
+          <span style="font-weight: 600;color: #ffffff;">入库中</span>
+        </div>
+        <div class="lineLeft" v-if="item.warehousingStatus==3">
+          <span style="font-weight: 600;">入库暂停</span>
+        </div>
+        <div class="lineRight" v-if="item.warehousingStatus==1">
           <div style="display: inline-block;">
-            <p style="font-weight: 700;font-size: 15px;margin-top: 8px;">TP202012030003(托盘3)</p>
-            <p style="font-size: 15px;color: #7F7F7F;">2号线 -- 2号料架 -- 3行5列</p>
+            <p
+              style="font-weight: 700;font-size: 15px;margin-top: 8px;"
+            >{{item.palletCode}}({{item.palletName}})</p>
+            <p
+              style="font-size: 15px;color: #7F7F7F;"
+            >{{item.conveyerName}} -- {{item.feederName}} -- {{item.storagebinLine}}行{{item.storagebinRow}}列</p>
           </div>
           <div style="float: right;padding-top: 20px;display: flex;width: 180px;">
             <span class="dellines" style="margin-left:100px">取消入库</span>
+          </div>
+        </div>
+        <div class="lineRight" v-if="item.warehousingStatus==2">
+          <p
+            style="font-weight: 700;font-size: 15px;margin-top: 8px;"
+          >{{item.palletCode}}({{item.palletName}})</p>
+          <p
+            style="font-size: 15px;color: #7F7F7F;"
+          >{{item.conveyerName}} -- {{item.feederName}} -- {{item.storagebinLine}}行{{item.storagebinRow}}列</p>
+        </div>
+        <div class="lineRight" v-if="item.warehousingStatus==3">
+          <div style="display: inline-block;">
+            <p style="font-weight: 700;font-size: 15px;">{{item.palletCode}}({{item.palletName}})</p>
+            <p
+              style="font-size: 15px;color: #7F7F7F;"
+            >{{item.conveyerName}} -- {{item.feederName}} -- {{item.storagebinLine}}行{{item.storagebinRow}}列</p>
+            <p style="font-size: 15px;color: #A30014;">急停故障(DB99.DBX1500.0)</p>
+          </div>
+
+          <div style="float: right;padding-top: 20px;display: flex;width: 180px;">
+            <span class="delline">删除入库队列</span>
+            <span class="dellines">完成入库</span>
           </div>
         </div>
       </div>
