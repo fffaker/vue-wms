@@ -4,9 +4,14 @@
       <Row>
         <Col span="8">
           <FormItem label="仓库">
-            <Select v-model="scan.store">
-              <Option value="1号仓库">1号仓库</Option>
-              <Option value="2号仓库">2号仓库</Option>
+            <Select v-model="storeBelonging">
+              <Option value="0">所有仓库</Option>
+              <Option
+                v-for="item in storeList"
+                :value="item.warehouseId"
+                :key="item.warehouseName"
+                :label="item.warehouseName"
+              ></Option>
             </Select>
           </FormItem>
         </Col>
@@ -18,6 +23,9 @@
         <Col span="6">
           <FormItem label="物料类型" prop="type">
             <treeselect
+              @select="selectType"
+              placeholder="请选择"
+              prop="type"
               v-model="scan.type"
               :multiple="false"
               :show-count="true"
@@ -35,7 +43,7 @@
         <Button type="primary" @click="reset">重&nbsp;&nbsp;&nbsp;置</Button>
       </Col>
       <Col span="2">
-        <Button type="primary">查&nbsp;&nbsp;&nbsp;询</Button>
+        <Button type="primary" @click="searchInfo">查&nbsp;&nbsp;&nbsp;询</Button>
       </Col>
     </Row>
     <Table :context="self" :height="400" :data="tableData" :columns="tableColumns" stripe border></Table>
@@ -59,68 +67,13 @@
       :mask-closable="false"
       @on-cancel="addstores=false;"
     >
-      <Form
-        style="margin-left:100px"
-        ref="store"
-        :model="store"
-        :rules="ruleValidate"
-        :label-width="100"
-      >
-        <p style="margin-left:-100px">基础信息</p>
-        <Row>
-          <Col span="18">
-            <FormItem label="仓库名称：" prop="name">
-              <Input v-model="store.name" placeholder="请输入仓库名称"></Input>
-            </FormItem>
-          </Col>
-        </Row>
-        <Row>
-          <Col span="18">
-            <FormItem label="仓库类型：" prop="type">
-              <Select v-model="store.type">
-                <Option value="总经理">总经理</Option>
-                <Option value="副总经理">副总经理</Option>
-                <Option value="车间主任">车间主任</Option>
-                <Option value="采购">采购</Option>
-                <Option value="工人">工人</Option>
-                <Option value="财务">财务</Option>
-              </Select>
-            </FormItem>
-          </Col>
-        </Row>
-        <Row>
-          <Col span="18">
-            <FormItem label="仓库管理员：" prop="admin">
-              <Select v-model="store.manger">
-                <Option value="总经理">总经理</Option>
-                <Option value="副总经理">副总经理</Option>
-                <Option value="车间主任">车间主任</Option>
-                <Option value="采购">采购</Option>
-                <Option value="工人">工人</Option>
-                <Option value="财务">财务</Option>
-              </Select>
-            </FormItem>
-          </Col>
-        </Row>
-
-        <Row>
-          <Col span="18">
-            <FormItem label="角色描述：">
-              <Input
-                v-model="store.textarea"
-                type="textarea"
-                :autosize="{minRows: 2,maxRows: 5}"
-                placeholder="请输入角色描述"
-              ></Input>
-            </FormItem>
-          </Col>
-        </Row>
+      <Form ref="store" :model="store" :rules="ruleValidate" :label-width="100">
+        <div>
+          <p>1号仓库</p>
+          <Table :columns="columns1" :data="data1" border height="400"></Table>
+        </div>
       </Form>
-      <div slot="footer">
-        <Button v-if="title=='编辑角色'" style="margin-right:500px" type="error" @click="delet">删除</Button>
-        <Button type="text">取消</Button>
-        <Button type="primary">保存</Button>
-      </div>
+      <div slot="footer"></div>
     </Modal>
 
     <!-- 删除确认框 -->
@@ -141,13 +94,20 @@ import {
   getMentalListPage,
   removeUser,
   editUser,
-  addUsers
+  addUsers,
+  getStorageListPage,
+  getStores,
+  getMentalTree,
+  getMentalPage
 } from '../../api/api';
 export default {
   components: { Treeselect },
   name: 'component-tree',
   data () {
     return {
+      id: '',
+      storeList: [],
+      storeBelonging: '',
       defaultProps: { label: "name", children: "children" },
       title: '',
       options: [{
@@ -188,6 +148,68 @@ export default {
 
 
       },
+      columns1: [
+        {
+          title: '料架名称',
+          key: 'feederName'
+        },
+        {
+          title: '库位',
+          key: 'storagebinLine',
+          render: (h, params) => {
+            return h("div", {}, params.row.storagebinRow == null ? '' : (params.row.storagebinLine + '行' + params.row.storagebinRow + '列'));
+          }
+
+        },
+        {
+          title: '托盘编号',
+          key: 'pallerCode'
+        },
+        {
+          title: '数量',
+          key: 'matterNum'
+        },
+        {
+          title: '入库时间',
+          key: 'warehousingTime'
+        },
+
+
+      ],
+      data1: [
+        {
+          name: '一号料架',
+          sit: '2行4列',
+          code: 'TP20201209001',
+          num: '180',
+          time: '2020-12-08 10:23',
+
+        },
+        {
+          name: '一号料架',
+          sit: '2行5列',
+          code: 'TP20201209002',
+          num: '210',
+          time: '2020-12-09 10:23',
+
+        },
+        {
+          name: '小计',
+          sit: '',
+          code: '',
+          num: '390',
+          time: '',
+        }
+
+        // },{
+        //   name: '一号料架',
+        //   sit: '2行4列',
+        //   code: 'TP20201209001',
+        //   num: '180',
+        //   time: '2020-12-08 10:23',
+
+        // },
+      ],
 
       ruleValidate: {
         name: [
@@ -203,44 +225,47 @@ export default {
       tableColumns: [
         {
           title: '行号',
-          key: 'matter_extend',
+          key: '',
           align: 'center',
-          sortable: true
+          type: 'index',
+          // sortable: true,
+          width: 70
 
         },
         {
-          title: '名称',
-          key: 'matter_name',
+          title: '物料名称',
+          key: 'matterName',
           align: 'center',
           sortable: false
 
         },
         {
-          title: '编码',
+          title: '物料编码',
           align: 'center',
-          key: 'matter_code',
+          key: 'matterCode',
           width: 100
         },
         {
           title: '型号',
           align: 'center',
-          key: 'matter_marking'
+          key: 'matterMarking'
         },
         {
-          title: '类型',
+          title: '物料类型',
           align: 'center',
-          key: 'matter_type'
+          key: 'matterType'
+        },
+        {
+          title: '库存数量',
+          align: 'center',
+          key: 'matterNum'
         },
         {
           title: '单位',
           align: 'center',
-          key: 'matter_unit'
+          key: 'matterUnit'
         },
-        {
-          title: '品牌',
-          align: 'center',
-          key: 'matter_brand'
-        },
+
         // {
         //   title: '性别',
         //   key: 'sex',
@@ -252,6 +277,7 @@ export default {
         {
           title: '操作',
           key: 'action',
+          align: 'center',
           fixed: 'right',
           width: 120,
           render: (h, params) => {
@@ -263,12 +289,19 @@ export default {
                 },
                 on: {
                   click: () => {
-                    this.title = '编辑角色'
+                    let id = params.row.matterId
+                    getMentalPage(id).then((res) => {
+                      this.data1 = res.data.data[0].mrList
+                      console.log(this.data1)
+
+
+                    });
+                    this.title = '库存分布(' + params.row.matterName + ')'
                     this.addstores = true;
 
                   }
                 }
-              }, '编辑')
+              }, '分布')
             ]);
           }
         }
@@ -352,18 +385,30 @@ export default {
     },
     getTableData () {
       let searchJson = {
-        matter_name: '',
-        matter_type: '',
-        start: this.start,
+        conditions: this.scan.mental,
+        warehouseId: this.storeBelonging == '0' ? '' : this.storeBelonging,
+        mattertypeId: this.scan.type,
+        page: this.page,
         limit: this.pageSize
       };
-      getMentalListPage(searchJson).then((res) => {
-
-        console.log(res)
-        this.total = res.data.total;
-        this.tableData = res.data.data;
+      getStorageListPage(searchJson).then((res) => {
+        if (res.data.code == 0) {
+          console.log(res)
+          this.total = res.data.data.total;
+          this.tableData = res.data.data.list;
+        } else {
+          this.$Message.error(res.data.msg);
+        }
 
       });
+
+    },
+    searchInfo () {
+      this.getTableData()
+    },
+    selectType (node, instanceId) {
+      console.log(node.id)
+      this.scan.type = node.id
 
     },
     show (index) {
@@ -392,9 +437,9 @@ export default {
       this.getTableData();
     },
     reset () {
-      this.scan.mental = ''
+      this.storeBelonging = ''
       this.scan.type = null
-      this.scan.store = ''
+      this.scan.mental = ''
 
     },
     // 切换模式 现有树形穿梭框模式transfer 和通讯录模式addressList
@@ -450,12 +495,38 @@ export default {
       this.start = (index - 1) * this.pageSize;
       this.getTableData();
     },
+    getStore () {
+      getStores().then((res) => {
+        this.storeList = res.data.data
+        console.log(res)
+      });
+    },
+    getTree () {
+      getMentalTree().then((res) => {
+        let str = JSON.stringify(res.data.data);
+        let reg = new RegExp('mattertypeName', 'g');
+        let newStr = str.replace(reg, 'label');
+        let a = JSON.parse(newStr)
+
+        this.options = a
+        // alert(JSON.stringify(this.options))
+
+
+
+
+      });
+    },
 
   },
 
   // components: { treeTransfer },
   mounted () {
     this.getTableData();
+  },
+  created () {
+    this.getStore();
+    this.getTree();
   }
 }
+
 </script>

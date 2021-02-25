@@ -2,45 +2,50 @@
 
 <template>
   <div>
-    <div id="print">
+    <div id="prints" style="display:none">
+      <div style="width:182px">
+        <p style="text-align: center;color:#000000" v-text="this.palletName"></p>
+        <svg id="prt" />
+      </div>
+    </div>
+    <div id="print" style="display:none">
       <div v-for="item of this.materials" :key="item.value" style="width:182px">
         <p style="text-align: center;">{{item.name}}</p>
         <svg v-bind:id="'qq'+item.name" />
       </div>
     </div>
-    <div>
-      <img :src="this.url" id="printme" />
-    </div>
     <Form :label-width="100">
       <Row>
         <Col span="8">
           <FormItem label="托盘信息：">
-            <Input v-model="palletInfo" placeholder="搜索仓库名称、备注"></Input>
+            <Input v-model="palletInfo" placeholder="搜索托盘编码、名称"></Input>
           </FormItem>
         </Col>
         <Col span="8" offset="1">
           <FormItem label="托盘类型：">
             <Select v-model="type">
-              <Option value="总经理">总经理</Option>
-              <Option value="副总经理">副总经理</Option>
-              <Option value="车间主任">车间主任</Option>
-              <Option value="采购">采购</Option>
-              <Option value="工人">工人</Option>
-              <Option value="财务">财务</Option>
+              <Option value="1">平托盘</Option>
+              <Option value="2">柱式托盘</Option>
+              <Option value="3">箱式托盘</Option>
+              <Option value="4">轮式托盘</Option>
+              <Option value="5">专用托盘</Option>
             </Select>
           </FormItem>
         </Col>
       </Row>
     </Form>
     <Row style="margin-bottom:20px">
-      <Col span="5">
+      <Col span="3">
         <Button type="primary" @click="addstore">新建托盘</Button>
       </Col>
-      <Col span="2" offset="15">
+      <Col span="5">
+        <Button type="primary" @click="mutiPrint">批量打印标签</Button>
+      </Col>
+      <Col span="2" offset="12">
         <Button type="primary" @click="reset">重&nbsp;&nbsp;&nbsp;置</Button>
       </Col>
       <Col span="2">
-        <Button type="primary">查&nbsp;&nbsp;&nbsp;询</Button>
+        <Button type="primary" @click="searchPallet">查&nbsp;&nbsp;&nbsp;询</Button>
       </Col>
     </Row>
     <div>
@@ -60,51 +65,43 @@
     </div>
     <!-- 新增模态框 -->
     <Modal
-      v-model="addstores"
+      v-model="addpallet"
       width="760"
       :title="title"
       :mask-closable="false"
-      @on-cancel="addstores=false;"
+      @on-cancel="addpallet=false;"
+      @on-ok="this.addPallets"
     >
       <Form
         style="margin-left:100px"
-        ref="store"
-        :model="store"
+        ref="pallet"
+        :model="pallet"
         :rules="ruleValidate"
         :label-width="100"
       >
-        <p style="margin-left:-100px">基础信息</p>
         <Row>
           <Col span="18">
-            <FormItem label="仓库名称：" prop="name">
-              <Input v-model="store.name" placeholder="请输入仓库名称"></Input>
+            <FormItem label="托盘编码：" prop="code">
+              <Input v-model="pallet.code" disabled></Input>
             </FormItem>
           </Col>
         </Row>
         <Row>
           <Col span="18">
-            <FormItem label="仓库类型：" prop="type">
-              <Select v-model="store.type">
-                <Option value="总经理">总经理</Option>
-                <Option value="副总经理">副总经理</Option>
-                <Option value="车间主任">车间主任</Option>
-                <Option value="采购">采购</Option>
-                <Option value="工人">工人</Option>
-                <Option value="财务">财务</Option>
-              </Select>
+            <FormItem label="托盘名称：" prop="name">
+              <Input v-model="pallet.name" placeholder="请输入托盘名称"></Input>
             </FormItem>
           </Col>
         </Row>
         <Row>
           <Col span="18">
-            <FormItem label="仓库管理员：" prop="admin">
-              <Select v-model="store.manger">
-                <Option value="总经理">总经理</Option>
-                <Option value="副总经理">副总经理</Option>
-                <Option value="车间主任">车间主任</Option>
-                <Option value="采购">采购</Option>
-                <Option value="工人">工人</Option>
-                <Option value="财务">财务</Option>
+            <FormItem label="托盘类型：" prop="type">
+              <Select v-model="pallet.type">
+                <Option value="1">平托盘</Option>
+                <Option value="2">柱式托盘</Option>
+                <Option value="3">箱式托盘</Option>
+                <Option value="4">轮式托盘</Option>
+                <Option value="5">专用托盘</Option>
               </Select>
             </FormItem>
           </Col>
@@ -112,36 +109,37 @@
 
         <Row>
           <Col span="18">
-            <FormItem label="角色描述：">
+            <FormItem label="托盘规格：">
               <Input
-                v-model="store.textarea"
+                v-model="pallet.size"
                 type="textarea"
                 :autosize="{minRows: 2,maxRows: 5}"
-                placeholder="请输入角色描述"
+                placeholder="请输入托盘规格"
               ></Input>
             </FormItem>
           </Col>
         </Row>
       </Form>
       <div slot="footer">
-        <Button v-if="title=='编辑角色'" style="margin-right:500px" type="error" @click="delet">删除</Button>
-        <Button type="text">取消</Button>
-        <Button type="primary">保存</Button>
+        <Button v-if="title=='编辑托盘'" style="margin-right:500px" type="error" @click="delet">删除</Button>
+        <Button type="text" @click="this.cancel">取消</Button>
+        <Button @click="this.addPallets" type="primary">保存</Button>
       </div>
     </Modal>
 
     <!-- 删除确认框 -->
     <Modal v-model="delModal" title="确认删除">
-      <p>确认删除该XXX？</p>
+      <p>确认删除该此条托盘信息？</p>
       <div slot="footer">
-        <Button type="error">确认删除</Button>
-        <Button type="primary">取消</Button>
+        <Button @click="delConfirm" type="error">确认删除</Button>
+        <Button type="primary" @click="delModal = false">取消</Button>
       </div>
     </Modal>
   </div>
 </template>
 <script>
 import jsbarcode from 'jsbarcode'
+import Vue from 'vue'
 import printTemplate from 'print-template'
 import treeTransfer from 'el-tree-transfer'
 import { getLodop } from "../../tools/lodop";
@@ -150,11 +148,17 @@ import {
   getMentalListPage,
   removeUser,
   editUser,
-  addUsers
+  addUsers,
+  getPalletListPage,
+  getPalletCode,
+  addPallet,
+  editPallet,
+  delPallet
 } from '../../api/api';
 export default {
   data () {
     return {
+      palletId: '',
       url: '',
       type: '',
       palletInfo: '',
@@ -163,28 +167,28 @@ export default {
       titles: ["待选菜单", "已选菜单"],
       mode: "transfer",
       self: this,
-      addstores: false,
+      addpallet: false,
       addMaterials: false,
       delModal: false,
       tableData: [],
-      materials: [{ name: '托盘1', value: '12345678' }, { name: "小型断路器5mm", value: '01.001' }],
-
-
-      store: {
-        textarea: '',
+      materials: [{ name: '托盘1', value: '12345678' }, { name: "小型断路器5mm", value: '44554455' }],
+      palletName: '',
+      palletCode: '',
+      pallet: {
+        code: '',
         name: '',
         type: '',
-        admin: '',
+        size: '',
 
 
       },
 
       ruleValidate: {
         name: [
-          { required: true, message: '请输入仓库名称', trigger: 'blur' }
+          { required: true, message: '请输入托盘名称', trigger: 'blur' }
         ],
         type: [
-          { required: true, message: '请输入仓库类型', trigger: 'blur' }
+          { required: true, message: '请输入托盘类型', trigger: 'blur' }
         ],
       },
 
@@ -192,33 +196,39 @@ export default {
       page: 1,
       tableColumns: [
         {
-          title: '姓名',
-          key: 'xt_userinfo_realName',
+          title: '行号',
+          key: '',
           align: 'center',
+          type: 'index',
+          // sortable: true,
+          width: 70
 
         },
         {
-          title: '账号',
-          key: 'xt_userinfo_name',
+          title: '托盘编码',
+          key: 'palletCode',
           align: 'center',
           sortable: false
 
         },
         {
-          title: '角色',
+          title: '托盘名称',
           align: 'center',
-          key: 'xt_role_name',
+          key: 'palletName',
           width: 100
         },
         {
-          title: '所属组织',
+          title: '托盘类型',
           align: 'center',
-          key: 'xt_departinfo_name'
+          key: 'palletType',
+          render: (h, params) => {
+            return h("div", {}, params.row.palletType == 1 ? "平托盘" : params.row.palletType == 2 ? "柱式托盘" : params.row.palletType == 3 ? "箱式托盘" : params.row.palletType == 4 ? "轮式托盘" : params.row.palletType == 5 ? "专用托盘" : '');
+          }
         },
         {
-          title: '状态',
+          title: '托盘规格',
           align: 'center',
-          key: 'xt_userinfo_state'
+          key: 'palletSpecs'
         },
         // {
         //   title: '性别',
@@ -231,6 +241,7 @@ export default {
         {
           title: '操作',
           key: 'action',
+          align: 'center',
           fixed: 'right',
           width: 140,
           render: (h, params) => {
@@ -242,8 +253,14 @@ export default {
                 },
                 on: {
                   click: () => {
-                    this.title = '编辑角色'
-                    this.addstores = true;
+                    this.$refs.pallet.resetFields()
+                    this.title = '编辑托盘'
+                    this.addpallet = true;
+                    this.pallet.code = params.row.palletCode
+                    this.pallet.name = params.row.palletName
+                    this.pallet.type = String(params.row.palletType)
+                    this.pallet.size = params.row.palletSpecs
+                    this.palletId = params.row.palletId
 
                   }
                 }
@@ -257,7 +274,19 @@ export default {
                 on: {
                   click: () => {
                     // this.printpage();
-                    this.getPrint()
+                    // this.getPrint()
+
+                    this.palletName = params.row.palletName
+                    this.palletCode = params.row.palletCode
+                    console.log(this.palletName)
+                    Vue.nextTick(() => {
+                      jsbarcode(
+                        '#prt',
+                        this.palletCode,
+                        { marginRight: 8, height: 50 } // 右边距
+                      )
+                      this.printpage()
+                    })
 
                   }
                 }
@@ -401,7 +430,7 @@ export default {
       this.type = ''
       // 创建打印模板 
       // this.getPrint()
-      this.printpage()
+
 
 
     },
@@ -413,43 +442,90 @@ export default {
     },
     getTableData () {
       let searchJson = {
-        searchJson: { xt_userinfo_realName: this.meInfo },
-        xt_departinfo_id: '',
-        xt_departinfo_name: '',
-        xt_post_name: '',
-        xt_userinfo_isDelete: '',
-        xt_userinfo_name: '',
-        xt_userinfo_realName: this.meInfo,
-        xt_userinfo_state: '0',
-        start: this.start,
+        conditions: this.palletInfo,
+        palletType: this.type,
+        page: this.page,
         limit: this.pageSize
       };
-      getUserListPage(searchJson).then((res) => {
+      getPalletListPage(searchJson).then((res) => {
+        if (res.data.code == 0) {
+          console.log(res)
+          this.total = res.data.data.total;
+          this.tableData = res.data.data.list;
+        } else {
+          this.$Message.error(res.data.msg);
+        }
 
-        console.log(res)
-        this.total = res.data.total;
-        this.tableData = res.data.data;
+
+      });
+    },
+    searchPallet () {
+      this.getTableData();
+    },
+    delConfirm () {
+      let id = this.palletId
+      delPallet(id).then((res) => {
+        if (res.data.code == 0) {
+          this.$Message.success('删除成功!');
+          this.addpallet = false
+          this.delModal = false
+          this.getTableData()
+
+        } else {
+          this.$Message.error(res.data.msg);
+          this.addpallet = false
+          this.delModal = false
+        }
+
 
       });
 
     },
-    show (index) {
-      this.$Modal.info({
-        title: '用户信息',
-        content: `姓名：${this.tableData[index].name}<br>年龄：${this.tableData[index].age}<br>地址：${this.tableData[index].addr}`
-      })
-    },
-    remove (index) {
-      let self = this;
-      this.$Modal.confirm({
-        title: '用户信息',
-        content: `是否删除此记录`,
-        onOk: function () {
-          this.$Loading.start();
-          let para = { id: index }
-          removeUser(para).then((res) => {
-            self.mockTableData();
-          });
+
+
+    addPallets () {
+
+      this.$refs.pallet.validate((valid) => {
+        if (valid) {
+          let params = {
+            palletCode: this.pallet.code,
+            palletName: this.pallet.name,
+            palletType: this.pallet.type,
+            palletSpecs: this.pallet.size
+
+          };
+          if (this.title == '编辑托盘') {
+            params.palletId = this.palletId
+            editPallet(params).then((res) => {
+              if (res.data.code == 0) {
+                this.$Message.success('编辑成功!');
+                this.addpallet = false
+                this.getTableData()
+
+              } else {
+                this.$Message.error(res.data.msg);
+                this.addpallet = false
+              }
+
+            });
+          } else {
+
+            addPallet(params).then((res) => {
+              if (res.data.code == 0) {
+                this.$Message.success('新增成功!');
+                this.addpallet = false
+                this.getTableData()
+
+              } else {
+                this.$Message.error(res.data.msg);
+                this.addpallet = false
+              }
+
+            });
+          }
+        } else {
+          this.$Message.error('表单验证失败!');
+          this.addpallet = false
         }
       })
     },
@@ -459,9 +535,21 @@ export default {
       this.getTableData();
     },
     addstore () {
-      this.title = '新建角色'
-      this.addstores = true;
+      this.$refs.pallet.resetFields()
+      this.title = '新建托盘'
+      this.addpallet = true;
+      getPalletCode().then((res) => {
 
+        console.log(res)
+        this.pallet.code = res.data.data;
+
+
+      });
+
+
+    },
+    cancel () {
+      this.addpallet = false
     },
     // 切换模式 现有树形穿梭框模式transfer 和通讯录模式addressList
 
@@ -516,8 +604,16 @@ export default {
       this.start = (index - 1) * this.pageSize;
       this.getTableData();
     },
-    printpage () {
+    mutiPrint () {
       var newstr = document.getElementById('print').innerHTML;
+      var oldstr = document.body.innerHTML;
+      document.body.innerHTML = newstr;
+      window.print();
+      document.body.innerHTML = oldstr;
+      window.location.reload();
+    },
+    printpage () {
+      var newstr = document.getElementById('prints').innerHTML;
       var oldstr = document.body.innerHTML;
       document.body.innerHTML = newstr;
       window.print();
@@ -564,7 +660,7 @@ export default {
     }
   },
   created () {
-    this.printCode()
+    // this.printCode()
 
     // 不要在create时调用jsbarcode库，此时相关DOM还未加载。
   },

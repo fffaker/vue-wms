@@ -1,12 +1,16 @@
 <template>
   <div style="background-color:#fff;padding-top:80px">
-    <input
-      class="lg"
-      @keyup.enter="submit"
-      v-show="current==0"
-      style="border-radius: 5px;border: 1px solid #dddee1;height: 90px; width: 390px;margin-left: 370px;font-size: 18px;padding: 6px 7px;"
-      placeholder="请扫描或输入托盘编码"
-    />
+    <div style="display: flex;
+    justify-content: center;">
+      <input
+        class="lg"
+        @keyup.enter="submit"
+        v-show="current==0"
+        style="border-radius: 5px;border: 1px solid #dddee1;height: 90px; width: 390px;font-size: 18px;padding: 6px 7px;"
+        placeholder="请扫描或输入托盘编码"
+      />
+    </div>
+
     <div style="margin:10px;height:325px"></div>
     <!-- <div v-show="current==1" style="height:200px;margin-top:80px">
       <span style="font-size:15px;color:#7F7F7F;margin-left:284px">托盘2</span>

@@ -8,7 +8,7 @@
 import axios from "axios";
 import router from "../main";
 import Vue from "vue";
-// import QS from 'qs'
+import QS from "qs";
 // import { Message} from 'element-ui';
 
 // axios 配置
@@ -30,13 +30,36 @@ axios.interceptors.request.use(
 // 响应拦截器
 axios.interceptors.response.use(
   (response) => {
-    // Vue.prototype.$loading.hide();
+    // console.log(response);
+    // switch (response.data.code) {
+    //   case 404:
+    //     router.replace({
+    //       path: "/404",
+    //       query: { redirect: router.currentRoute.fullPath },
+    //     });
+    //     break;
+    //   case 500:
+    //     router.replace({
+    //       path: "/error-500",
+    //       query: { redirect: router.currentRoute.fullPath },
+    //     });
+    //     break;
+    //   case 401:
+
+    //     localStorage.removeItem("token");
+    //     router.replace({
+    //       path: "/login",
+    //       query: { redirect: router.currentRoute.fullPath },
+    //     });
+
+    //     break;
+    // }
     return response;
   },
   (err) => {
     // Vue.prototype.$loading.hide();
     if (err.response) {
-      switch (err.response.status) {
+      switch (err.response.data.code) {
         case 404:
           router.replace({
             path: "/404",
@@ -52,9 +75,10 @@ axios.interceptors.response.use(
         case 401:
           // 返回 401 清除token信息并跳转到登录页面
           // store.commit(types.LOGOUT);
+          // store.commit("token", "");
           localStorage.removeItem("token");
           router.replace({
-            path: "login",
+            path: "/login",
             query: { redirect: router.currentRoute.fullPath },
           });
           break;

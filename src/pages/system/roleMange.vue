@@ -143,18 +143,20 @@ export default {
           title: '角色名称',
           key: 'xt_role_name',
           align: 'center',
+          minWidth: 200
 
         },
         {
           title: '角色描述',
           align: 'center',
           key: 'xt_role_desc',
-          width: 300
+          minwidth: 300
         },
         {
           title: '拥有菜单数',
           align: 'center',
-          key: 'xt_role_type'
+          key: 'xt_role_type',
+          minWidth: 200
         },
 
         {
@@ -412,3 +414,8 @@ export default {
   }
 }
 </script>
+<style >
+.ivu-table-overflowX {
+  overflow-x: hidden;
+}
+</style>

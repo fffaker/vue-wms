@@ -12,12 +12,24 @@ export default {
   name: 'app',
   components: {
   },
-  // mounted: function () {
-  //   //此方法刷新页面时也会执行
-  //   window.addEventListener('beforeunload', () => {
-  //     localStorage.removeItem('token');
-  //   });
-  // },
+  mounted: function () {
+    let beginTime = 0; //开始时间
+    let differTime = 0; //时间差
+    window.onunload = function () {
+      differTime = new Date().getTime() - beginTime;
+      if (differTime <= 5) {
+        localStorage.removeItem('token');
+
+        console.log("这是关闭");
+      } else {
+        console.log("这是刷新");
+      }
+    };
+
+    window.onbeforeunload = function () {
+      beginTime = new Date().getTime();
+    };
+  },
 }
 </script>
 
@@ -75,10 +87,10 @@ body {
   font-size: 14px !important;
   width: 100%;
   height: 100%;
-  background: url(assets/login.png) cover;
+  background: url(assets/login.jpg) cover;
   -webkit-font-smoothing: antialiased;
 
-  background: url('assets/login.png');
+  background: url('assets/login.jpg');
   repeat: no-repeat;
   background-attachment: fixed;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='assets/login.jpg', sizingMethod='scale');

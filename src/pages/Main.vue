@@ -29,7 +29,7 @@
       </div>
     </div>
     <div
-      style="margin-top:20px;width:1110px;height:300px;background:#fff;clear: both;display: inline-block;"
+      style="margin-top:20px;width:1110px;height:300px;background:#fff;clear: both;display: inline-block;float:left"
     >
       <div style="width:1110px;height:300px;" ref="myEcharts"></div>
     </div>
@@ -101,7 +101,7 @@
     </div>
     <!-- 出库队列 -->
     <div
-      style="padding-top: 17px;padding-left: 17px;margin-top:20px;margin-left:10px;width:550px;height:200px;background:#fff;clear: both;display: inline-block;"
+      style="padding-top: 17px;padding-left: 17px;margin-top:20px;margin-left:10px;width:550px;height:250px;background:#fff;float: left;display: inline-block;"
     >
       <p style="font-weight: 700;color: #333333;">出库队列</p>
       <p style="font-weight: 600;font-size:12px;color: #333333;">出库中:1,出库等待:1</p>

@@ -12,10 +12,14 @@
               <DropdownMenu
                 v-model="ware"
                 slot="list"
-                v-for="(item,index) in this.wares"
+                v-for="(item,index) in this.storeList"
+                :value="item.warehouseId"
                 :key="index"
               >
-                <DropdownItem :name="item" v-bind:divided="index>0?true:false">{{item}}</DropdownItem>
+                <DropdownItem
+                  :name="item"
+                  v-bind:divided="index>0?true:false"
+                >{{item.warehouseName}}</DropdownItem>
               </DropdownMenu>
             </Dropdown>
           </Col>
@@ -79,6 +83,7 @@
         <Step title="入库"></Step>
       </Steps>
       <input
+        v-model="palletCode"
         class="lg"
         @keyup.enter="submit"
         v-show="current==0"
@@ -91,24 +96,45 @@
           <Row>
             <Col span="20">
               <FormItem label="托盘:">
-                <p style="font-weight: 600;">TP20201205002(托盘2)</p>
+                <p style="font-weight: 600;">{{this.palletCode}}</p>
               </FormItem>
             </Col>
           </Row>
           <Row>
             <Col span="20">
               <FormItem label=" 料架和库位:" prop="stackWare">
-                <a style="font-weight: 600;">请选择料架和库位</a>
+                <Select v-model="warePosition" style="width:200px" @on-change="choosPosition">
+                  <OptionGroup
+                    v-model="warePositions"
+                    v-for="(item,index) in position"
+                    :key="item.feederName"
+                    :label="item.feederName"
+                    :value="item.feederId"
+                  >
+                    <Option
+                      v-for="item in position[index].storagebinDTOS"
+                      :value="item.storagebinId"
+                      :key="item.storagebinName"
+                    >{{ item.storagebinName }}</Option>
+                  </OptionGroup>
+                </Select>
+                <!-- <a style="font-weight: 600;">请选择料架和库位</a> -->
               </FormItem>
             </Col>
           </Row>
           <Row>
             <Col span="20">
               <FormItem label="传送线:" prop="transmit">
-                <RadioGroup v-model="border">
-                  <Radio label="1号线" border></Radio>
-                  <Radio label="2号线" border></Radio>
-                  <Radio label="3号线" border></Radio>
+                <RadioGroup v-model="disks" @on-change="choosDisk">
+                  <Radio
+                    v-for="(item,index) in this.disk"
+                    :label="item.conveyerId"
+                    :value="item.conveyerId"
+                    :key="index"
+                    border
+                  >
+                    <span>{{item.conveyerName}}</span>
+                  </Radio>
                 </RadioGroup>
               </FormItem>
             </Col>
@@ -125,7 +151,7 @@
       <div slot="footer">
         <Button v-show="current==0" type="primary" @click="next">&nbsp;&nbsp;下一步&nbsp;&nbsp;</Button>
         <Button
-          style="margin-right:653px"
+          style="float:left"
           v-show="current==1"
           type="default"
           @click="back"
@@ -134,62 +160,119 @@
       </div>
     </Modal>
     <!-- 载物托盘入库框 -->
-    <Modal width="860" height="860" v-model="mentalModal">
+    <Modal width="960" height="960" v-model="mentalModal">
       <p style="text-align:center;margin-top: 18px;font-size: 16px;margin-bottom: 50px;">载物托盘入库</p>
-      <Steps :current="current" style="width:450px;margin-left: 167px;">
+      <Steps :current="current" style="width:450px;margin-left: 225px;">
         <Step title="扫描托盘"></Step>
         <Step title="绑定物料"></Step>
         <Step title="入库"></Step>
       </Steps>
-      <input
-        class="lg"
-        @keyup.enter="submit"
-        v-show="current==0"
-        style="border-radius: 5px;border: 1px solid #dddee1;height: 90px; width: 390px;margin-left: 220px;margin-top: 70px;font-size: 18px;padding: 6px 7px;"
-        placeholder="请扫描或输入托盘编码"
-      />
+      <Form ref="formValidate" :model="formValidate" :rules="ruleValidatess">
+        <FormItem prop="palletCodes">
+          <input
+            v-model="palletCode"
+            class="lg"
+            @keyup.enter="submit"
+            v-show="current==0"
+            style="border-radius: 5px;border: 1px solid #dddee1;height: 90px; width: 390px;margin-left: 264px;margin-top: 70px;font-size: 18px;padding: 6px 7px;"
+            placeholder="请扫描或输入托盘编码"
+          />
+        </FormItem>
+      </Form>
       <div v-show="current==0" style="height:200px"></div>
-      <div v-show="current==1" style="height:200px;margin-top:50px">
-        <span style="font-size:15px;color:#7F7F7F;margin-left:100px">托盘2</span>
-        <span style="font-weight: 600;font-size:15px;margin-left:2px">21205002</span>
+      <div v-show="current==1" style="height:300px;margin-top:50px">
+        <span style="font-size:15px;color:#7F7F7F;margin-left:195px">托盘</span>
+        <span style="font-weight: 600;font-size:15px;margin-left:2px">{{this.palletCode}}</span>
         <AutoComplete
+          @on-search="chooseMental"
+          @on-select="addMental"
           style="display: inline-block;width: 300px;margin-left:100px"
           v-model="mental"
           :data="material"
           :filter-method="filterMethod"
           placeholder="请扫描或输入物料编码、名称、型号"
         ></AutoComplete>
+        <div style="margin-top:20px">
+          <el-table :data="tableData" border max-height="250">
+            <el-table-column prop="index" align="center" label="行号" type="index" width="50"></el-table-column>
+            <el-table-column prop="matterName" align="center" label="名称" min-width="150"></el-table-column>
+            <el-table-column prop="matterCode" align="center" label="编码" width="180"></el-table-column>
+            <el-table-column prop="mode" align="center" label="型号" width="180"></el-table-column>
+            <el-table-column prop="matterNum" align="center" label="数量" width="180">
+              <template slot-scope="scope">
+                <el-input-number
+                  v-model="scope.row.matterNum"
+                  :min="1"
+                  size="mini"
+                  controls-position="right"
+                ></el-input-number>
+                <!-- <input type="text" v-model="scope.row.num" class="cell-input" /> -->
+              </template>
+            </el-table-column>
+            <el-table-column prop="unit" align="center" label="单位" width="80"></el-table-column>
+            <el-table-column label="移除" width="80">
+              <template slot-scope="scope">
+                <el-button
+                  @click.native.prevent="deleteRow(scope.$index, tableData)"
+                  type="text"
+                  size="small"
+                >移除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
       </div>
-      <div v-show="current==2" style="margin-left:120px;margin-top:50px">
+      <div v-show="current==2" style="margin-left:144px;margin-top:50px">
         <Form ref="warePalet" :model="warePalet" :rules="ruleValidates" :label-width="120">
           <Row>
             <Col span="20">
               <FormItem label="托盘:">
-                <p style="font-weight: 600;">TP20201205002(托盘2)</p>
+                <p style="font-weight: 600;">{{this.palletCode}}</p>
               </FormItem>
             </Col>
           </Row>
           <Row>
             <Col span="20">
               <FormItem label="物料:">
-                <p style="font-weight: 600;">共2种，合计10件</p>
+                <p style="font-weight: 600;">共{{this.tableData.length}}种，合计{{this.nums}}件</p>
               </FormItem>
             </Col>
           </Row>
           <Row>
             <Col span="20">
               <FormItem label=" 料架和库位:" prop="stackWare">
-                <a style="font-weight: 600;">请选择料架和库位</a>
+                <Select v-model="warePosition" style="width:200px" @on-change="choosPosition">
+                  <OptionGroup
+                    v-model="warePositions"
+                    v-for="(item,index) in position"
+                    :key="item.feederName"
+                    :label="item.feederName"
+                    :value="item.feederId"
+                  >
+                    <Option
+                      v-for="item in position[index].storagebinDTOS"
+                      :value="item.storagebinId"
+                      :key="item.storagebinName"
+                    >{{ item.storagebinName }}</Option>
+                  </OptionGroup>
+                </Select>
+                <!-- <a style="font-weight: 600;">请选择料架和库位</a> -->
               </FormItem>
             </Col>
           </Row>
           <Row>
             <Col span="20">
               <FormItem label="传送线:" prop="transmit">
-                <RadioGroup v-model="border">
-                  <Radio label="1号线" border></Radio>
-                  <Radio label="2号线" border></Radio>
-                  <Radio label="3号线" border></Radio>
+                <RadioGroup v-model="disks" @on-change="choosDisk">
+                  <Radio
+                    v-for="(item,index) in this.disk"
+                    :label="item.conveyerId"
+                    :value="item.conveyerId"
+                    :key="index"
+                    border
+                  >
+                    <span>{{item.conveyerName}}</span>
+                  </Radio>
                 </RadioGroup>
               </FormItem>
             </Col>
@@ -198,8 +281,8 @@
             <Col span="20">
               <FormItem label="托盘状态:" prop="plateState">
                 <RadioGroup v-model="plateState">
-                  <Radio label="满载" border></Radio>
-                  <Radio label="有空余" border></Radio>
+                  <Radio label="2" border>满载</Radio>
+                  <Radio label="1" border>有空余</Radio>
                 </RadioGroup>
               </FormItem>
             </Col>
@@ -229,20 +312,48 @@
 <script>
 import treeTransfer from 'el-tree-transfer'
 import {
-  addUsers
+  addUsers,
+  codeValid,
+  getMentalList,
+  matterBinding,
+  getStores,
+  getPosition,
+  getDisk,
+  palletInWare,
+  inWareList
 } from '../../api/api';
 export default {
   data () {
     return {
-      ware: '1号仓库',
+      inWareList: [],
+      feederId: '',
+      disks: '',
+      disk: '',
+      warePosition: '',
+      warePositions: '',
+      wareId: '',
+      ruleValidatess: {
+        palletCodes: [
+          { required: true, message: '请输入或扫描托盘编码', trigger: 'blur' }
+        ]
+      },
+      position: [],
+      storeList: [],
+      nums: 0,
+      tableData: [],
+      palletCode: '',
+      ware: '',
       wares: ['1号仓库', '2号仓库'],
       emptyModal: false,
       mentalModal: false,
       current: 0,
       border: '',
-      material: ['小型断路器', '世达六角旋具套筒'],
+      material: [],
       mental: '',
       warePalet: {},
+      formValidate: {
+        palletCode: '',
+      },
       emptyPalet: {},
       ruleValidate: {
         stackWare: [
@@ -268,34 +379,140 @@ export default {
     }
   },
   methods: {
+    deleteRow (index, rows) {
+      rows.splice(index, 1);
+    },
     filterMethod (value, option) {
       return option.toUpperCase().indexOf(value.toUpperCase()) !== -1;
     },
     changeWare (name) {
-      this.ware = name
+      this.ware = name.warehouseName;
+      this.wareId = name.warehouseId
     },
     emptyWare () {
       this.current = 0;
       this.emptyModal = true
+      this.palletCode = ''
+      let id = this.wareId
+      this.position = [];
+      this.disk = [];
+      getPosition(id).then((res) => {
+        if (res.data.code == 0) {
+          this.position = res.data.data
+        } else {
+          this.$Message.error(res.data.msg);
+        }
+      });
+      let params = {
+        conveyerType: 0,
+        warehouseId: this.wareId
+      }
+      getDisk(params).then((res) => {
+        if (res.data.code == 0) {
+          this.disk = res.data.data
+        } else {
+          this.$Message.error(res.data.msg);
+        }
+      });
+
 
     },
     mentalWare () {
       this.current = 0;
       this.mentalModal = true
+      this.palletCode = ''
+      let id = this.wareId
+      this.position = [];
+      this.disk = [];
+      getPosition(id).then((res) => {
+        if (res.data.code == 0) {
+          this.position = res.data.data
+        } else {
+          this.$Message.error(res.data.msg);
+        }
+      });
+      let params = {
+        conveyerType: 0,
+        warehouseId: this.wareId
+      }
+      getDisk(params).then((res) => {
+        if (res.data.code == 0) {
+          this.disk = res.data.data
+        } else {
+          this.$Message.error(res.data.msg);
+        }
+      });
     },
     next () {
-      if (this.current == 1) {
-        this.current = 0;
+      if (this.palletCode) {
+        let code = this.palletCode
+        codeValid(code).then((res) => {
+          if (res.data.code == 0) {
+            if (this.current == 1) {
+              this.current = 0;
+            } else {
+              this.current += 1;
+            }
+          } else {
+            this.$Message.error(res.data.msg);
+          }
+
+        });
+
       } else {
-        this.current += 1;
+        this.$Message.error('请扫描或输入托盘编码！');
       }
+
+
     },
     nexts () {
-      if (this.current == 2) {
-        this.current = 0;
+      if (this.current == 0) {
+        if (this.palletCode) {
+          let code = this.palletCode
+          codeValid(code).then((res) => {
+            if (res.data.code == 0) {
+              if (this.current == 2) {
+                this.current = 0;
+              } else {
+                this.current += 1;
+              }
+            } else {
+              this.$Message.error(res.data.msg);
+            }
+
+          });
+
+        } else {
+          this.$Message.error('请扫描或输入托盘编码！');
+        }
       } else {
-        this.current += 1;
+        if (this.tableData.length > 0) {
+          for (var i = 0; i < this.tableData.length; i++) {
+
+            this.nums = this.tableData[i].matterNum + this.nums
+          }
+          console.log(this.nums)
+          let params = this.tableData
+          matterBinding(params).then((res) => {
+            if (res.data.code == 0) {
+              if (this.current == 2) {
+                this.current = 0;
+              } else {
+                this.current += 1;
+              }
+            } else {
+              this.$Message.error(res.data.msg);
+            }
+
+
+
+          })
+
+        } else {
+          this.$Message.error('请先选择物料进行绑定！');
+        }
       }
+
     },
     back () {
       this.current = 0;
@@ -304,20 +521,173 @@ export default {
       this.current = 1;
     },
     next1 () {
-      this.emptyModal = false
-      this.current = 0
+      let params = {
+        palletCode: this.palletCode,
+        conveyerId: this.disks,
+        feederId: this.feederId,
+        palletStatus: 0,
+        storagebinId: this.warePosition,
+        warehouseId: this.wareId
+
+      };
+      palletInWare(params).then((res) => {
+        if (res.data.code == 0) {
+          this.emptyModal = false
+          this.current = 0
+          this.$Message.success('成功进入入库队列!');
+        } else {
+          this.$Message.error(res.data.code);
+          this.emptyModal = false
+          this.current = 0
+
+        }
+
+      })
+
     },
     next2 () {
-      this.mentalModal = false
-      this.current = 0
+
+
+      // this.$refs.warePalet.validate((valid) => {
+      // if (valid) {
+      let params = {
+        palletCode: this.palletCode,
+        conveyerId: this.disks,
+        feederId: this.feederId,
+        palletStatus: Number(this.plateState),
+        storagebinId: this.warePosition,
+        warehouseId: this.wareId
+
+      };
+      palletInWare(params).then((res) => {
+        if (res.data.code == 0) {
+          this.mentalModal = false
+          this.current = 0
+          this.$Message.success('成功进入入库队列!');
+        } else {
+          this.$Message.error(res.data.code);
+          this.mentalModal = false
+          this.current = 0
+
+        }
+
+      })
+      // } else {
+      //   this.$Message.error('表单验证失败!');
+      //   this.addstores = false
+      // }
+      // })
     },
     submit () {
       console.log(111)
       this.current = 1
+    },
+    addMental (value) {
+      let arr = value.split(' ')
+      let code = arr[0];
+      let num = 0;
+      console.log(code)
+      for (var i = 0; i < this.tableData.length; i++) {
+        if (code == this.tableData[i].matterCode) {
+          num++;
+          this.tableData[i].matterNum = this.tableData[i].matterNum + 1
+        }
+      }
+      if (num == 0) {
+        let params = {
+          conditions: code
+        }
+        if (code) {
+          getMentalList(params).then((res) => {
+            if (res.data.code == 0) {
+
+              let arr = res.data.data
+              this.tableData.push({
+                matterName: arr[0].matterName,
+                matterCode: arr[0].matterCode,
+                mode: arr[0].matterMarking,
+                matterNum: 1,
+                untieNum: 0,
+                unit: '个',
+                matterId: arr[0].matterId,
+                palletCode: this.palletCode
+              })
+
+
+            } else {
+              this.$Message.error(res.data.msg);
+
+            }
+          });
+        }
+      }
+      // this.tableData.push({
+      //   name: '小型断路器',
+      //   code: '01.01.001',
+      //   mode: '5mm L48mm',
+      //   num: 1,
+      //   unit: '个'
+      // })
+    },
+    choosDisk () {
+      console.log(this.disks)
+    },
+    choosPosition () {
+      for (var i = 0; i < this.position.length; i++) {
+        for (var j = 0; j < this.position[i].storagebinDTOS.length; j++) {
+          if (this.warePosition == this.position[i].storagebinDTOS[j].storagebinId) {
+            this.feederId = this.position[i].storagebinDTOS[j].feederId
+          }
+        }
+      }
+    },
+    chooseMental () {
+      let params = {
+        conditions: this.mental
+      }
+      if (this.mental) {
+        getMentalList(params).then((res) => {
+          if (res.data.code == 0) {
+            let mentals = []
+            let arr = res.data.data
+            for (var i = 0; i < arr.length; i++) {
+              mentals.push(arr[i].extendA)
+            }
+            this.material = mentals
+          } else {
+            this.$Message.error(res.data.msg);
+
+          }
+        });
+      }
+
     }
   },
+  created () {
 
+    getStores().then((res) => {
+      this.storeList = res.data.data
+      this.ware = res.data.data[0].warehouseName
+      this.wareId = res.data.data[0].warehouseId
+      let id = this.wareId
+      inWareList(id).then(
+        (res) => {
+          if (res.data.code == 0) {
+            this.inWareList = res.data.data
+          }
+        }
+      )
+    });
+
+
+
+
+
+
+  },
   mounted () {
+
+
 
   }
 }
@@ -415,5 +785,22 @@ export default {
 }
 .lg:hover {
   border-color: #57a3f3 !important;
+}
+$border-focus-color: #a7d5ec;
+.cell-input {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding-left: 10px;
+  padding-right: 10px;
+  box-sizing: border-box;
+  &:focus {
+    border: 1px solid $border-focus-color;
+  }
 }
 </style>

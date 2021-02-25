@@ -12,10 +12,14 @@
               <DropdownMenu
                 v-model="ware"
                 slot="list"
-                v-for="(item,index) in this.wares"
+                v-for="(item,index) in this.storeList"
+                :value="item.warehouseId"
                 :key="index"
               >
-                <DropdownItem :name="item" v-bind:divided="index>0?true:false">{{item}}</DropdownItem>
+                <DropdownItem
+                  :name="item"
+                  v-bind:divided="index>0?true:false"
+                >{{item.warehouseName}}</DropdownItem>
               </DropdownMenu>
             </Dropdown>
           </Col>
@@ -150,91 +154,40 @@
     <!-- 载物托盘出库框 -->
     <Modal width="860" height="860" v-model="mentalModal">
       <p style="text-align:center;margin-top: 18px;font-size: 16px;margin-bottom: 50px;">载物托盘出库</p>
-      <Steps :current="current" style="width:450px;margin-left: 167px;">
-        <Step title="扫描托盘"></Step>
-        <Step title="绑定物料"></Step>
-        <Step title="出库"></Step>
-      </Steps>
-      <Input
-        v-show="current==0"
-        style="height: 100px; width: 390px;margin-left: 220px;margin-top: 70px;"
-        size="large"
-        placeholder="请扫描或输入托盘编码"
-      />
-      <div v-show="current==0" style="height:200px"></div>
-      <div v-show="current==1" style="height:200px;margin-top:50px">
-        <span style="font-size:15px;color:#7F7F7F;margin-left:100px">托盘2</span>
-        <span style="font-weight: 600;font-size:15px;margin-left:2px">21205002</span>
-        <AutoComplete
-          style="display: inline-block;width: 300px;margin-left:100px"
-          v-model="mental"
-          :data="material"
-          :filter-method="filterMethod"
-          placeholder="请扫描或输入物料编码、名称、型号"
-        ></AutoComplete>
-      </div>
-      <div v-show="current==2" style="margin-left:120px;margin-top:50px">
-        <Form ref="warePalet" :model="warePalet" :rules="ruleValidates" :label-width="120">
-          <Row>
-            <Col span="20">
-              <FormItem label="托盘:">
-                <p style="font-weight: 600;">TP20201205002(托盘2)</p>
-              </FormItem>
-            </Col>
-          </Row>
-          <Row>
-            <Col span="20">
-              <FormItem label="物料:">
-                <p style="font-weight: 600;">共2种，合计10件</p>
-              </FormItem>
-            </Col>
-          </Row>
-          <Row>
-            <Col span="20">
-              <FormItem label=" 料架和库位:" prop="stackWare">
-                <a style="font-weight: 600;">请选择料架和库位</a>
-              </FormItem>
-            </Col>
-          </Row>
-          <Row>
-            <Col span="20">
-              <FormItem label="传送线:" prop="transmit">
-                <RadioGroup v-model="border">
-                  <Radio label="1号线" border></Radio>
-                  <Radio label="2号线" border></Radio>
-                  <Radio label="3号线" border></Radio>
-                </RadioGroup>
-              </FormItem>
-            </Col>
-          </Row>
-          <Row>
-            <Col span="20">
-              <FormItem label="托盘状态:" prop="plateState">
-                <RadioGroup v-model="plateState">
-                  <Radio label="满载" border></Radio>
-                  <Radio label="有空余" border></Radio>
-                </RadioGroup>
-              </FormItem>
-            </Col>
-          </Row>
-        </Form>
+      <Form :label-width="80">
+        <Row>
+          <Col span="8">
+            <FormItem label="出库托盘:">
+              <Input style="width:250px" search enter-button placeholder="搜索物料或托盘信息" />
+            </FormItem>
+          </Col>
+        </Row>
+      </Form>
+      <Table
+        ref="selection"
+        :context="self"
+        :columns="tableColumns"
+        :data="tableData"
+        stripe
+        border
+        @on-select="aa"
+        @on-selection-change="changePallet"
+        @on-select-all="selectAll"
+      ></Table>
+      <div style="margin: 10px;overflow: hidden">
+        <div style="float: right;">
+          <Page
+            :total="total"
+            show-sizer
+            :page-size-opts="[5, 10, 30]"
+            :page-size="pageSize"
+            @on-change="changePage"
+            @on-page-size-change="nowpage"
+          ></Page>
+        </div>
       </div>
       <div slot="footer">
-        <Button v-show="current==0" type="primary" @click="nexts">&nbsp;&nbsp;下一步&nbsp;&nbsp;</Button>
-        <Button
-          style="float: left;"
-          v-show="current==1"
-          type="default"
-          @click="back"
-        >&nbsp;&nbsp;上一步&nbsp;&nbsp;</Button>
-        <Button v-show="current==1" type="primary" @click="nexts">&nbsp;&nbsp;绑定物料，下一步&nbsp;&nbsp;</Button>
-        <Button
-          style="float: left;"
-          v-show="current==2"
-          type="default"
-          @click="back1"
-        >&nbsp;&nbsp;上一步&nbsp;&nbsp;</Button>
-        <Button v-show="current==2" type="primary" @click="next2">&nbsp;&nbsp;出库&nbsp;&nbsp;</Button>
+        <Button type="primary" @click="next2">&nbsp;&nbsp;出库&nbsp;&nbsp;</Button>
       </div>
     </Modal>
   </div>
@@ -242,12 +195,106 @@
 <script>
 import treeTransfer from 'el-tree-transfer'
 import {
-  addUsers
+  addUsers,
+  getStores,
+  getOutWareListPage,
+  getDisk,
+  palletOutWare
+
 } from '../../api/api';
+import expandRow from './table-expand.vue';
 export default {
+  components: { expandRow },
   data () {
     return {
-      ware: '1号仓库',
+
+      tableColumns: [
+        {
+          type: 'selection',
+          width: 60,
+          align: 'center',
+        },
+        {
+          type: 'expand',
+          width: 50,
+          render: (h, params) => {
+            return h(expandRow, {
+              props: {
+                row: params.row
+              }
+            })
+          }
+        },
+        {
+          title: '托盘编码',
+          align: 'center',
+          key: 'palletCode'
+        },
+        {
+          title: '料架',
+          align: 'center',
+          key: 'feederName'
+        },
+        {
+          title: '库位',
+          align: 'center',
+          key: 'storagebinLine',
+          render: (h, params) => {
+            return h("div", {}, params.row.storagebinLine + '行' + params.row.storagebinRow + '列');
+          }
+        },
+
+        {
+          title: '传送线',
+          center: 'center',
+          key: 'conveyerId',
+          width: 200,
+          render: (h, params) => {
+            return h('Select', {
+              props: {
+                value: '',
+                transfer: true,
+                // disabled: !(this.$refs.selection.objData[params.index]._isChecked)
+              },
+              on: {
+                'on-change': (value) => {
+                  console.log(params.row)
+                  // console.log(params.index)
+                  this.$refs.selection.objData[params.index]._isDisabled = false
+                  params.row.conveyerId = value
+                  this.tableData[params.index].conveyerId = value
+
+
+                  // this.disk[params.index].conveyerName = value;
+                }
+              },
+            },
+              this.disk.map((obj) => {
+                return h('Option', {
+                  props: { value: obj.conveyerId, label: obj.conveyerName }
+                });
+              })
+            );
+          },
+        }
+      ],
+      tableData: [
+
+      ],
+      total: 0,
+      selectList: [],
+      self: this,
+      page: 1,
+      pageSize: 10,
+      start: 0,
+      palletIds: '',
+      storeList: [],
+      warePosition: '',
+      warePositions: '',
+      wareId: '',
+      inWareList: [],
+      disk: [],
+      ware: '',
       wares: ['1号仓库', '2号仓库'],
       emptyModal: false,
       mentalModal: false,
@@ -281,11 +328,72 @@ export default {
     }
   },
   methods: {
+    aa (selection, row) {
+
+      this.palletIds = row.palletId
+      // console.log(row);
+
+    },
+    changePallet (selection) {
+      console.log(this.$refs.selection, selection);
+      this.selectList = selection
+    },
+    selectAll (selection) {
+      // console.log(selection);
+    },
+    getTableData () {
+      let searchJson = {
+        // conditions: '',
+        palletStatus: 0,
+        page: this.page,
+        limit: this.pageSize
+      };
+      getOutWareListPage(searchJson).then((res) => {
+        if (res.data.code == 0) {
+          console.log(res)
+          this.total = res.data.data.total;
+          this.tableData = res.data.data.list;
+          this.tableData.map(item => {
+            item._disabled = true;
+            item.conveyerId = '';
+          })
+        } else {
+          this.$Message.error(res.data.msg);
+        }
+
+      });
+
+    },
+
+    changePage (index) {
+      this.page = index;
+      this.start = (index - 1) * this.pageSize;
+      this.getTableData();
+    },
+    nowpage (index) {
+      this.pageSize = index;
+      this.page = 1;
+      this.start = (index - 1) * this.pageSize;
+      this.getTableData();
+    },
     filterMethod (value, option) {
       return option.toUpperCase().indexOf(value.toUpperCase()) !== -1;
     },
     changeWare (name) {
-      this.ware = name
+      this.ware = name.warehouseName;
+      this.wareId = name.warehouseId
+      this.disk = [];
+      let params = {
+        conveyerType: 1,
+        warehouseId: this.wareId
+      }
+      getDisk(params).then((res) => {
+        if (res.data.code == 0) {
+          this.disk = res.data.data
+        } else {
+          this.$Message.error(res.data.msg);
+        }
+      });
     },
     emptyWare () {
       this.current = 0;
@@ -293,8 +401,21 @@ export default {
 
     },
     mentalWare () {
+      this.$refs.selection.selectAll(false);
       this.current = 0;
       this.mentalModal = true
+      let params = {
+        conveyerType: 1,
+        warehouseId: this.wareId
+      }
+      this.disk = [];
+      getDisk(params).then((res) => {
+        if (res.data.code == 0) {
+          this.disk = res.data.data
+        } else {
+          this.$Message.error(res.data.msg);
+        }
+      });
     },
     next () {
       if (this.current == 1) {
@@ -317,27 +438,157 @@ export default {
       this.current = 1;
     },
     next1 () {
-      this.emptyModal = false
-      this.current = 0
+      var params = []
+      for (var i = 0; i < this.selectList.length; i++) {
+        params[i] = {
+          "conveyerId": "1346737825828753409",
+          "feederId": "",
+          "palletCode": "",
+          "palletId": this.selectList[i].palletId,
+          "palletIsbinding": 0,
+          "palletIsdelete": 0,
+          "palletName": "",
+          "palletSpecs": "",
+          "palletStatus": 0,
+          "palletType": 0,
+          "storagebinId": "",
+          "storagebinStatus": 0,
+          "warehouseId": "",
+          "warehousingStatus": 0
+
+        }
+      }
+      // let params = [
+      //   {
+      //     "conveyerId": "1346737825828753409",
+      //     "feederId": "",
+      //     "palletCode": "",
+      //     "palletId": "1348441467724165122",
+      //     "palletIsbinding": 0,
+      //     "palletIsdelete": 0,
+      //     "palletName": "",
+      //     "palletSpecs": "",
+      //     "palletStatus": 0,
+      //     "palletType": 0,
+      //     "storagebinId": "",
+      //     "storagebinStatus": 0,
+      //     "warehouseId": "",
+      //     "warehousingStatus": 0
+      //   }
+      // ]
+      console.log(params)
+      palletOutWare(params).then((res) => {
+        if (res.data.code == 0) {
+          this.emptyModal = false
+          this.current = 0
+          this.$Message.success('成功进入出库队列！');
+        } else {
+          this.$Message.error(res.data.code);
+          this.emptyModal = false
+          this.current = 0
+
+        }
+
+      })
+
     },
     next2 () {
-      this.mentalModal = false
-      this.current = 0
+      var params = []
+      for (var i = 0; i < this.selectList.length; i++) {
+        params[i] = {
+          "conveyerId": this.selectList[i].conveyerId,
+          "feederId": "",
+          "palletCode": "",
+          "palletId": this.selectList[i].palletId,
+          "palletIsbinding": 0,
+          "palletIsdelete": 0,
+          "palletName": "",
+          "palletSpecs": "",
+          "palletStatus": 0,
+          "palletType": 0,
+          "storagebinId": "",
+          "storagebinStatus": 0,
+          "warehouseId": "",
+          "warehousingStatus": 0
+
+        }
+      }
+      console.log(params)
+      // let params =
+      //   [{
+      //     "conveyerId": this.disk[0].conveyerId,
+      //     "feederId": "",
+      //     "palletCode": "",
+      //     "palletId": this.palletIds,
+      //     "palletIsbinding": 0,
+      //     "palletIsdelete": 0,
+      //     "palletName": "",
+      //     "palletSpecs": "",
+      //     "palletStatus": 0,
+      //     "palletType": 0,
+      //     "storagebinId": "",
+      //     "storagebinStatus": 0,
+      //     "warehouseId": "",
+      //     "warehousingStatus": 0
+      //   }]
+
+
+      // params = JSON.stringify(params)
+      palletOutWare(params).then((res) => {
+        if (res.data.code == 0) {
+          this.mentalModal = false
+          this.current = 0
+          this.$Message.success('成功进入出库队列！');
+        } else {
+          this.$Message.error(res.data.code);
+          this.mentalModal = false
+          this.current = 0
+
+        }
+
+      })
+
     },
     submit () {
       console.log(111)
       this.current = 1
     }
   },
+  created () {
 
+    getStores().then((res) => {
+      this.storeList = res.data.data
+      this.ware = res.data.data[0].warehouseName
+      this.wareId = res.data.data[0].warehouseId
+      let id = this.wareId
+      // inWareList(id).then(
+      //   (res) => {
+      //     if (res.data.code == 0) {
+      //       this.inWareList = res.data.data
+      //     }
+      //   }
+      // )
+
+    });
+
+
+
+
+
+
+
+  },
   mounted () {
-
+    this.getTableData();
   }
 }
 </script>
 <style lang="scss">
 </style>
 <style lang="scss" scoped>
+.expand-row {
+  margin-bottom: 16px;
+}
 .wareHead {
   background: #ffffff;
   height: 64px;

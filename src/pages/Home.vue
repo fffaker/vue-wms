@@ -4,7 +4,7 @@
   position: relative;
   overflow: hidden;
   min-height: 100%;
-  /* height: 100%; */
+  height: 100%;
 }
 .layout-breadcrumb {
   padding: 10px 15px 0;
@@ -58,6 +58,8 @@
 .userinfo {
   display: inline-block;
   float: right;
+  margin-right: 30px;
+  font-size: 18px;
 }
 .userinfo .ivu-dropdown {
   margin-top: 50px;
@@ -101,7 +103,7 @@
           <div class="layout-logo-left">
             <img src="../assets/logo.png" alt />
             <!-- <Icon type="paper-airplane" :size="logoSize" v-show="logoIsDisplay"></Icon> -->
-            <p style="color:blue;font-size:12px">金猫 GoLden Cat</p>
+            <p style="color:#2d8cf0;font-size:12px">金猫 GoLden Cat</p>
           </div>
           <template
             v-for="(item,index) in $router.options.routes"
@@ -161,14 +163,17 @@
       </i-col>
       <i-col :span="spanRight">
         <div class="layout-header">
-          <i-button type="text" @click="toggleClick">
-            <Icon type="md-menu" size="32"></Icon>
+          <i-button type="text" style="margin-left: 5px;margin-top: 13px;" @click="toggleClick">
+            <img
+              v-bind:src="spanLeft>3?require('../assets/left.png'):require('../assets/right.png')"
+              style="width:36px"
+            />
           </i-button>
-          <div class="userinfo">
+          <div class="userinfo" style="cursor:pointer">
             <Dropdown placement="bottom-end">
               <span class="head-img">
                 {{curUserName}}
-                <img src="../assets/user.jpg" />
+                <Icon type="md-arrow-dropdown" />
               </span>
               <Dropdown-menu slot="list">
                 <Dropdown-item @click.native="modifyPassWord()">修改密码</Dropdown-item>
@@ -214,6 +219,7 @@
 import {
   logout
 } from '../api/api';
+import { mapMutations } from 'vuex';
 export default {
   data () {
     return {
@@ -245,7 +251,7 @@ export default {
   },
   computed: {
     iconSize () {
-      return this.spanLeft === 4 ? 14 : 24;
+      return this.spanLeft === 4 ? 18 : 24;
     },
     logoSize () {
       if (this.spanLeft !== 4) {
@@ -258,6 +264,7 @@ export default {
     }
   },
   methods: {
+    ...mapMutations(['changeLogin']),
     toggleClick () {
       if (this.spanLeft === 4) {
         this.spanLeft = 1;
@@ -275,6 +282,7 @@ export default {
       logout().then((res) => {
         if (res.data.code == 0) {
           localStorage.setItem("token", '');
+          this.changeLogin({ token: '' });
         }
       })
       // localStorage.setItem("token", '');
@@ -315,6 +323,7 @@ export default {
 .ivu-select-dropdown .ivu-dropdown {
   margin: 0px 12px 0px 0px;
 }
+
 ._dropdownList {
   /*  width: 100%;
     text-align: center; */
@@ -322,5 +331,20 @@ export default {
 ._iconCls {
   width: 56px;
   text-align: center;
+}
+</style>
+<style>
+.ivu-table-overflowX {
+  overflow-x: hidden;
+}
+.ivu-table-tip table {
+  width: auto;
+}
+.ivu-table-tip {
+  overflow-x: hidden !important;
+  overflow-y: hidden;
+}
+.el-table th.gutter {
+  display: table-cell !important;
 }
 </style>

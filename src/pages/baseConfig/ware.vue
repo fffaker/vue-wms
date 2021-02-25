@@ -130,6 +130,7 @@
           <Form :label-width="89" style="margin-top:20px">
             <FormItem label="可存放物料:">
               <treeselect
+                placeholder="请选择"
                 v-model="material"
                 :multiple="false"
                 :show-count="true"

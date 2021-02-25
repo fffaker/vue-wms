@@ -163,6 +163,7 @@
           <Col span="20">
             <FormItem label="所属组织：" prop="orz">
               <treeselect
+                placeholder="请选择"
                 v-model="person.orz"
                 :multiple="false"
                 :show-count="true"
@@ -225,6 +226,7 @@
           <Col span="20">
             <FormItem label="所属组织：" prop="orz">
               <treeselect
+                placeholder="请选择"
                 v-model="persons.orz"
                 :multiple="false"
                 :show-count="true"

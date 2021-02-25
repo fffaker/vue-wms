@@ -30,13 +30,13 @@ let routes = [
     hidden: true,
   },
   {
-    path: "/500",
+    path: "/404",
     component: NotFound,
     name: "",
     hidden: true,
   },
   {
-    path: "/404",
+    path: "/500",
     component: severError,
     name: "",
     hidden: true,
@@ -61,19 +61,23 @@ let routes = [
   {
     path: "/",
     component: Home,
-    name: "系统管理",
-    iconCls: "ios-paw",
+    name: "出入库管理",
+    iconCls: "ios-options-outline",
     children: [
-      { path: "/org", component: org, name: "组织与人员" },
-      { path: "/roleMange", component: roleMange, name: "角色管理" },
+      { path: "/inWarehouse", component: inWarehouse, name: "托盘入库" },
+      { path: "/exWarehouse", component: exWarehouse, name: "托盘出库" },
+      { path: "/mentalBind", component: mentalBind, name: "物料绑定" },
+      { path: "/mentalUnbind", component: mentalUnbind, name: "物料解绑" },
+      { path: "/wareScene", component: wareScene, name: "库位全景" },
+      { path: "/search", component: search, name: "库存查询" },
+      { path: "/record", component: record, name: "出入库记录" },
     ],
   },
-
   {
     path: "/",
     component: Home,
     name: "基础配置",
-    iconCls: "ios-paw",
+    iconCls: "ios-cog-outline",
     children: [
       { path: "/store", component: store, name: "仓库管理" },
       { path: "/stack", component: stack, name: "料架管理" },
@@ -86,16 +90,11 @@ let routes = [
   {
     path: "/",
     component: Home,
-    name: "出入库管理",
-    iconCls: "ios-paw",
+    name: "系统管理",
+    iconCls: "ios-construct-outline",
     children: [
-      { path: "/inWarehouse", component: inWarehouse, name: "托盘入库" },
-      { path: "/exWarehouse", component: exWarehouse, name: "托盘出库" },
-      { path: "/mentalBind", component: mentalBind, name: "物料绑定" },
-      { path: "/mentalUnbind", component: mentalUnbind, name: "物料解绑" },
-      { path: "/wareScene", component: wareScene, name: "库位全景" },
-      { path: "/search", component: search, name: "库存查询" },
-      { path: "/record", component: record, name: "出入库记录" },
+      { path: "/org", component: org, name: "组织与人员" },
+      { path: "/roleMange", component: roleMange, name: "角色管理" },
     ],
   },
   {

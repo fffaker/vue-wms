@@ -1,20 +1,22 @@
 <template>
   <div style="background-color:#fff;padding-top:80px">
-    <div style="width:70%;padding-left: 120px;">
-      <Steps :current="current" style="width:350px;margin-left: 270px;">
+    <div style="display:flex;justify-content: center;">
+      <Steps :current="current" style="width:350px;">
         <Step title="扫描托盘"></Step>
         <Step title="绑定物料"></Step>
       </Steps>
     </div>
+    <div style="display:flex;justify-content: center;">
+      <input
+        v-focus
+        class="lg"
+        @keyup.enter="submit"
+        v-show="current==0"
+        style="border-radius: 5px;border: 1px solid #dddee1;height: 90px; width: 390px;margin-top: 100px;font-size: 18px;padding: 6px 7px;"
+        placeholder="请扫描或输入托盘编码"
+      />
+    </div>
 
-    <input
-      v-focus
-      class="lg"
-      @keyup.enter="submit"
-      v-show="current==0"
-      style="border-radius: 5px;border: 1px solid #dddee1;height: 90px; width: 390px;margin-left: 370px;margin-top: 100px;font-size: 18px;padding: 6px 7px;"
-      placeholder="请扫描或输入托盘编码"
-    />
     <div v-show="current==1" style="height:200px;margin-top:80px">
       <span style="font-size:15px;color:#7F7F7F;margin-left:284px">托盘2</span>
       <span style="font-weight: 600;font-size:15px;margin-left:2px">21205002</span>

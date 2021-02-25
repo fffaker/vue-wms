@@ -17,7 +17,7 @@
         <Button type="primary" @click="reset">重&nbsp;&nbsp;&nbsp;置</Button>
       </Col>-->
       <Col span="2" offset="17">
-        <Button type="primary">查&nbsp;&nbsp;&nbsp;询</Button>
+        <Button type="primary" @click="searchStore">查&nbsp;&nbsp;&nbsp;询</Button>
       </Col>
     </Row>
     <Table :context="self" :height="400" :data="tableData" :columns="tableColumns" stripe border></Table>
@@ -60,12 +60,10 @@
           <Col span="18">
             <FormItem label="仓库类型：" prop="type">
               <Select v-model="store.type">
-                <Option value="总经理">总经理</Option>
-                <Option value="副总经理">副总经理</Option>
-                <Option value="车间主任">车间主任</Option>
-                <Option value="采购">采购</Option>
-                <Option value="工人">工人</Option>
-                <Option value="财务">财务</Option>
+                <Option value="1">自动仓库</Option>
+                <Option value="2">半自动仓库</Option>
+                <Option value="3">普通仓库</Option>
+                <Option value="4">虚拟仓库</Option>
               </Select>
             </FormItem>
           </Col>
@@ -73,7 +71,7 @@
         <Row>
           <Col span="18">
             <FormItem label="仓库管理员：" prop="admin">
-              <Select v-model="store.manger">
+              <Select v-model="store.admin">
                 <Option value="总经理">总经理</Option>
                 <Option value="副总经理">副总经理</Option>
                 <Option value="车间主任">车间主任</Option>
@@ -91,24 +89,24 @@
                 v-model="store.textarea"
                 type="textarea"
                 :autosize="{minRows: 2,maxRows: 5}"
-                placeholder="请输入角色描述"
+                placeholder="请输入"
               ></Input>
             </FormItem>
           </Col>
         </Row>
       </Form>
       <div slot="footer">
-        <Button v-if="title=='编辑角色'" style="margin-right:500px" type="error" @click="delet">删除</Button>
-        <Button type="text">取消</Button>
-        <Button type="primary">保存</Button>
+        <Button v-if="title=='编辑仓库'" style="margin-right:500px" type="error" @click="delet">删除</Button>
+        <Button type="text " @click="addstores = false">取消</Button>
+        <Button type="primary" @click="addStores">保存</Button>
       </div>
     </Modal>
     <!-- 删除确认框 -->
     <Modal v-model="delModal" title="确认删除">
-      <p>确认删除该XXX？</p>
+      <p>确认删除该仓库？</p>
       <div slot="footer">
-        <Button type="error">确认删除</Button>
-        <Button type="primary">取消</Button>
+        <Button type="error" @click="delConfirm">确认删除</Button>
+        <Button type="primary" @click="delModal = false">取消</Button>
       </div>
     </Modal>
   </div>
@@ -120,11 +118,16 @@ import {
   getMentalListPage,
   removeUser,
   editUser,
-  addUsers
+  addUsers,
+  getStoreListPage,
+  addStore,
+  editStore,
+  delStore
 } from '../../api/api';
 export default {
   data () {
     return {
+      id: '',
       defaultProps: { label: "name", children: "children" },
       title: '',
       titles: ["待选菜单", "已选菜单"],
@@ -154,14 +157,16 @@ export default {
       tableColumns: [
         {
           title: '行号',
-          key: 'matter_extend',
+          key: '',
           align: 'center',
-          sortable: true
+          type: 'index',
+          // sortable: true,
+          width: 70
 
         },
         {
           title: '仓库名称',
-          key: 'matter_name',
+          key: 'warehouseName',
           align: 'center',
           sortable: false
 
@@ -169,23 +174,27 @@ export default {
         {
           title: '仓库类型',
           align: 'center',
-          key: 'matter_code',
-          width: 100
+          key: 'warehouseType',
+          width: 120,
+          render: (h, params) => {
+            return h("div", {}, params.row.warehouseType == 1 ? "自动仓库" : params.row.warehouseType == 2 ? "半自动仓库" : params.row.warehouseType == 3 ? "普通仓库" : params.row.warehouseType == 4 ? "虚拟仓库" : '');
+          }
         },
         {
           title: '仓库管理员',
           align: 'center',
-          key: 'matter_marking'
+          key: 'warehouseAdmin'
         },
         {
           title: '备注',
           align: 'center',
-          key: 'matter_type'
+          key: 'warehouseRemark'
         },
         {
           title: '操作',
           key: 'action',
           fixed: 'right',
+          align: 'center',
           width: 120,
           render: (h, params) => {
             return h('div', [
@@ -196,8 +205,14 @@ export default {
                 },
                 on: {
                   click: () => {
-                    this.title = '编辑角色'
+                    this.$refs.store.resetFields()
+                    this.title = '编辑仓库'
                     this.addstores = true;
+                    this.store.admin = params.row.warehouseAdmin
+                    this.store.name = params.row.warehouseName
+                    this.store.type = String(params.row.warehouseType)
+                    this.store.textarea = params.row.warehouseRemark
+                    this.id = params.row.warehouseId
 
                   }
                 }
@@ -221,16 +236,18 @@ export default {
     },
     getTableData () {
       let searchJson = {
-        matter_name: '',
-        matter_type: '',
-        start: this.start,
+        conditions: this.storeInfo,
+        page: this.page,
         limit: this.pageSize
       };
-      getMentalListPage(searchJson).then((res) => {
-
-        console.log(res)
-        this.total = res.data.total;
-        this.tableData = res.data.data;
+      getStoreListPage(searchJson).then((res) => {
+        if (res.data.code == 0) {
+          console.log(res)
+          this.total = res.data.data.total;
+          this.tableData = res.data.data.list;
+        } else {
+          this.$Message.error(res.data.msg);
+        }
 
       });
 
@@ -242,7 +259,8 @@ export default {
       this.getTableData();
     },
     addstore () {
-      this.title = '新建角色'
+      this.$refs.store.resetFields()
+      this.title = '新建仓库'
       this.addstores = true;
 
     },
@@ -252,6 +270,75 @@ export default {
       this.start = (index - 1) * this.pageSize;
       this.getTableData();
     },
+    searchStore () {
+      this.getTableData();
+    },
+    delConfirm () {
+      let id = this.id
+      delStore(id).then((res) => {
+        if (res.data.code == 0) {
+          this.$Message.success('删除成功!');
+          this.addstores = false
+          this.delModal = false
+          this.getTableData()
+
+        } else {
+
+
+          this.addstores = false
+          this.delModal = false
+          this.$Message.error(res.data.msg);
+        }
+
+
+      });
+
+    },
+    addStores () {
+
+      this.$refs.store.validate((valid) => {
+        if (valid) {
+          let params = {
+            warehouseAdmin: this.store.admin,
+            warehouseType: this.store.type,
+            warehouseName: this.store.name,
+            warehouseRemark: this.store.textarea
+
+          };
+          if (this.title == '编辑仓库') {
+            params.warehouseId = this.id
+            editStore(params).then((res) => {
+              if (res.data.code == 0) {
+                this.$Message.success('编辑成功!');
+                this.addstores = false
+                this.getTableData()
+
+              } else {
+                this.$Message.error(res.data.msg);
+                this.addstores = false
+              }
+
+            });
+          } else {
+            addStore(params).then((res) => {
+              if (res.data.code == 0) {
+                this.$Message.success('新增成功!');
+                this.addstores = false
+                this.getTableData()
+
+              } else {
+                this.$Message.error(res.data.msg);
+                this.addstores = false
+              }
+
+            });
+          }
+        } else {
+          this.$Message.error('表单验证失败!');
+          this.addstores = false
+        }
+      })
+    }
 
   },
 

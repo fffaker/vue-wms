@@ -4,10 +4,14 @@
       <Row>
         <Col span="8">
           <FormItem label="所属仓库:">
-            <Select>
-              <Option value="所有">全部</Option>
-              <Option value="1号仓库">1号仓库</Option>
-              <Option value="2号仓库">2号仓库</Option>
+            <Select v-model="storeBelonging" @on-change="selectStore">
+              <Option value="0">所有仓库</Option>
+              <Option
+                v-for="item in storeList"
+                :value="item.warehouseName"
+                :key="item.warehouseName"
+                :label="item.warehouseName"
+              ></Option>
             </Select>
           </FormItem>
         </Col>
@@ -47,17 +51,21 @@
     >
       <Form
         style="margin-left:100px"
-        ref="store"
-        :model="store"
+        ref="stack"
+        :model="stack"
         :rules="ruleValidate"
         :label-width="100"
       >
         <Row>
           <Col span="18">
-            <FormItem label="所属仓库：" prop="type">
-              <Select v-model="store.type">
-                <Option value="1号仓库">1号仓库</Option>
-                <Option value="2号仓库">2号仓库</Option>
+            <FormItem label="所属仓库：" prop="storeBelonging">
+              <Select v-model="stack.storeBelonging">
+                <Option
+                  v-for="item in storeList"
+                  :value="item.warehouseId"
+                  :key="item.warehouseName"
+                  :label="item.warehouseName"
+                ></Option>
               </Select>
             </FormItem>
           </Col>
@@ -65,21 +73,21 @@
         <Row>
           <Col span="18">
             <FormItem label="料架名称：" prop="name">
-              <Input v-model="store.name" placeholder="请输入料架名称"></Input>
+              <Input v-model="stack.name" placeholder="请输入料架名称"></Input>
             </FormItem>
           </Col>
         </Row>
         <Row>
           <Col span="18">
-            <FormItem label="行数：" prop="name">
-              <Input placeholder="请输入料架行数"></Input>
+            <FormItem label="行数：" prop="line">
+              <Input v-model="stack.line" placeholder="请输入料架行数"></Input>
             </FormItem>
           </Col>
         </Row>
         <Row>
           <Col span="18">
-            <FormItem label="列数：" prop="name">
-              <Input placeholder="请输入料架列数"></Input>
+            <FormItem label="列数：" prop="row">
+              <Input v-model="stack.row" placeholder="请输入料架列数"></Input>
             </FormItem>
           </Col>
         </Row>
@@ -87,7 +95,7 @@
           <Col span="18">
             <FormItem label="备注：">
               <Input
-                v-model="store.textarea"
+                v-model="stack.textarea"
                 type="textarea"
                 :autosize="{minRows: 2,maxRows: 5}"
                 placeholder="请输入备注"
@@ -97,17 +105,17 @@
         </Row>
       </Form>
       <div slot="footer">
-        <Button v-if="title=='编辑角色'" style="margin-right:500px" type="error" @click="delet">删除</Button>
-        <Button type="text">取消</Button>
-        <Button type="primary">保存</Button>
+        <Button v-if="title=='编辑料架'" style="margin-right:500px" type="error" @click="delet">删除</Button>
+        <Button type="text" @click="addstores = false">取消</Button>
+        <Button type="primary" @click="addStacks">保存</Button>
       </div>
     </Modal>
     <!-- 删除确认框 -->
     <Modal v-model="delModal" title="确认删除">
-      <p>确认删除该XXX？</p>
+      <p>确认删除该料架？</p>
       <div slot="footer">
-        <Button type="error">确认删除</Button>
-        <Button type="primary">取消</Button>
+        <Button type="error" @click="delConfirm">确认删除</Button>
+        <Button type="primary" @click="delModal = false">取消</Button>
       </div>
     </Modal>
   </div>
@@ -119,11 +127,19 @@ import {
   getMentalListPage,
   removeUser,
   editUser,
-  addUsers
+  addUsers,
+  getStackListPage,
+  getStores,
+  addStack,
+  editStack,
+  delStack
 } from '../../api/api';
 export default {
   data () {
     return {
+      id: '',
+      storeBelonging: '',
+      storeList: [],
       defaultProps: { label: "name", children: "children" },
       title: '',
       titles: ["待选菜单", "已选菜单"],
@@ -134,18 +150,25 @@ export default {
       delModal: false,
       tableData: [],
       storeInfo: '',
-      store: {
+      stack: {
+        storeBelonging: '',
         textarea: '',
         name: '',
-        type: '',
-        admin: '',
+        row: '',
+        line: '',
       },
       ruleValidate: {
-        name: [
-          { required: true, message: '请输入仓库名称', trigger: 'blur' }
+        storeBelonging: [
+          { required: true, message: '请输入所属仓库', trigger: 'blur' }
         ],
-        type: [
-          { required: true, message: '请输入仓库类型', trigger: 'blur' }
+        name: [
+          { required: true, message: '请输入料架名称', trigger: 'blur' }
+        ],
+        line: [
+          { required: true, message: '请输入行数', trigger: 'blur' }
+        ],
+        row: [
+          { required: true, message: '请输入列数', trigger: 'blur' }
         ],
       },
 
@@ -154,42 +177,45 @@ export default {
       tableColumns: [
         {
           title: '行号',
-          key: 'matter_extend',
+          key: '',
           align: 'center',
-          sortable: true
+          type: 'index',
+          // sortable: true,
+          width: 70
+
         },
         {
           title: '所属仓库',
-          key: 'matter_name',
+          key: 'warehouseName',
           align: 'center',
           sortable: false
-
         },
         {
           title: '料架名称',
           align: 'center',
-          key: 'matter_code',
+          key: 'feederName',
           width: 100
         },
         {
           title: '行数',
           align: 'center',
-          key: 'matter_marking'
+          key: 'feederLine'
         },
         {
           title: '列数',
           align: 'center',
-          key: 'matter_type'
+          key: 'feederRow'
         },
         {
           title: '备注',
           align: 'center',
-          key: 'matter_unit'
+          key: 'feederNote'
         },
         {
           title: '操作',
           key: 'action',
           fixed: 'right',
+          align: 'center',
           width: 120,
           render: (h, params) => {
             return h('div', [
@@ -200,8 +226,15 @@ export default {
                 },
                 on: {
                   click: () => {
-                    this.title = '编辑角色'
+                    this.$refs.stack.resetFields()
+                    this.title = '编辑料架'
                     this.addstores = true;
+                    this.stack.storeBelonging = params.row.warehouseId
+                    this.stack.name = params.row.feederName
+                    this.stack.line = String(params.row.feederLine)
+                    this.stack.row = String(params.row.feederRow)
+                    this.id = params.row.feederId
+
 
                   }
                 }
@@ -216,6 +249,84 @@ export default {
     }
   },
   methods: {
+    getStore () {
+      getStores().then((res) => {
+        this.storeList = res.data.data
+        console.log(res)
+      });
+    },
+    delConfirm () {
+      let id = this.id
+      delStack(id).then((res) => {
+        if (res.data.code == 0) {
+          this.$Message.success('删除成功!');
+          this.addstores = false
+          this.delModal = false
+          this.getTableData()
+
+        } else {
+
+
+          this.addstores = false
+          this.delModal = false
+          this.$Message.error(res.data.msg);
+        }
+
+
+      });
+
+    },
+    addStacks () {
+
+      this.$refs.stack.validate((valid) => {
+        if (valid) {
+          let params = {
+            warehouseId: this.stack.storeBelonging,
+            feederName: this.stack.name,
+            feederLine: this.stack.line,
+            feederRow: this.stack.row,
+            feederNote: this.stack.textarea
+
+          };
+          if (this.title == '编辑料架') {
+            params.feederId = this.id
+            editStack(params).then((res) => {
+              if (res.data.code == 0) {
+                this.$Message.success('编辑成功!');
+                this.addstores = false
+                this.getTableData()
+
+              } else {
+                this.$Message.error(res.data.msg);
+                this.addstores = false
+              }
+
+            });
+          } else {
+
+            addStack(params).then((res) => {
+              if (res.data.code == 0) {
+                this.$Message.success('新增成功!');
+                this.addstores = false
+                this.getTableData()
+
+              } else {
+                this.$Message.error(res.data.msg);
+                this.addstores = false
+              }
+
+            });
+          }
+        } else {
+          this.$Message.error('表单验证失败!');
+          this.addstores = false
+        }
+      })
+    },
+    selectStore () {
+      console.log(this.storeBelonging)
+      this.getTableData();
+    },
 
     delet () {
       this.delModal = true;
@@ -225,16 +336,19 @@ export default {
     },
     getTableData () {
       let searchJson = {
-        matter_name: '',
-        matter_type: '',
-        start: this.start,
+        warehouseName: this.storeBelonging == '0' ? '' : this.storeBelonging,
+        page: this.page,
         limit: this.pageSize
       };
-      getMentalListPage(searchJson).then((res) => {
+      getStackListPage(searchJson).then((res) => {
+        if (res.data.code == 0) {
+          console.log(res)
+          this.total = res.data.data.total;
+          this.tableData = res.data.data.list;
+        } else {
+          this.$Message.error(res.data.msg);
+        }
 
-        console.log(res)
-        this.total = res.data.total;
-        this.tableData = res.data.data;
 
       });
 
@@ -245,7 +359,8 @@ export default {
       this.getTableData();
     },
     addstore () {
-      this.title = '新建角色'
+      this.$refs.stack.resetFields()
+      this.title = '新建料架'
       this.addstores = true;
 
     },
@@ -261,6 +376,9 @@ export default {
 
   mounted () {
     this.getTableData();
+  },
+  created () {
+    this.getStore();
   }
 }
 </script>
