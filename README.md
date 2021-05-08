@@ -8,7 +8,7 @@
 * Fork 当前库
 * 复制一下命令到您的目录</br>
 ```
-https://github.com/hanjiangxueying/vue2-iview2-admin.git
+https://github.com/fffaker/vue-wms.git
 ```
 ## 浏览器支持
 * IE 9+
